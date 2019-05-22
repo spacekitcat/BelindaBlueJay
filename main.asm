@@ -65,18 +65,19 @@ BOOT_STRAP:
   sta $2006
 
 	lda #%10001000
-	sta $2000 ; set horizontal nametable increment
+	sta $2000
 	lda $2002
 	lda #$3F
 	sta $2006
-	stx $2006 ; set PPU address to $3F00
+  lda #$00
+	stx $2006
 	ldx #0
 	:
 		lda palette, X
 		sta $2007
 		inx
 		cpx #32
-bcc :-
+    bcc :-
 
 INIT_PPU_MIRROR_RAM:
   lda #$B0
