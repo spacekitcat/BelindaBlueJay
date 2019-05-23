@@ -25,6 +25,7 @@ palette:
 buttons1: .res 1
 buttons2: .res 1
 player_velocity_counter: .res 1
+player_sprite_direction: .res 1
 
 .segment "STARTUP"
 IRQ:
@@ -89,8 +90,17 @@ BOOT_STRAP:
 INIT_PPU_MIRROR_RAM:
   lda #$B0
   sta $0200 ; Y.
-  lda #$00 
+
+  lda #$00
   sta $0201 ; Tile number.
+
+  lda player_sprite_direction
+  cmp #%000000010
+  bne DONE
+  lda #$02
+  sta $0201 ; Tile number.
+DONE:
+  
   lda #%00010000
   sta $0202 ; Attributes.
   lda #$80
@@ -103,18 +113,13 @@ INIT_PPU:
   sta $2001
 
 MAIN:
-INPUT:
-  lda #$01
-  sta $4016
-  sta buttons1
-  lsr a
-  sta $4016
-  :
-    lda $4016
-    lsr a
-    rol buttons1
-    bcc :-
-  
+  jsr POLL_FLIP_FLOPS
+  jsr PARSE_INPUT
+END_MAIN:
+  jmp MAIN
+
+PARSE_INPUT:
+  jsr RATE_LIMIT
   lda buttons1
   and #%00000001
   bne MOVE_RIGHT
@@ -127,15 +132,21 @@ INPUT:
   lda buttons1
   and #%00000100
   bne MOVE_DOWN
-  jmp MAIN
+  rts
 
-MOVE_RIGHT:
+RATE_LIMIT:
   ; Rate limit
   inc player_velocity_counter
   lda player_velocity_counter
   and #%11000000
   beq MAIN
   clv
+  rts
+
+MOVE_RIGHT:
+  ; Switch sprite sheet
+  lda #$00000001
+  sta player_sprite_direction
 
   ; Move point reset
   lda #$00
@@ -145,6 +156,10 @@ MOVE_RIGHT:
   jmp MAIN
 
 MOVE_LEFT:
+  ; Switch sprite sheet
+  lda #$00000001
+  sta player_sprite_direction
+
   ; Rate limit
   inc player_velocity_counter
   lda player_velocity_counter
@@ -160,17 +175,13 @@ MOVE_LEFT:
   jmp MAIN
 
 MOVE_UP:
+  ; Switch sprite sheet
+  ;lda #$00000000
+  ;sta player_sprite_direction
 
   ; Vertical flip (via PPU OAM ports)
   lda #%00000000
   sta $0202
-
-  ; Rate limit
-  inc player_velocity_counter
-  lda player_velocity_counter
-  and #%11000000
-  beq MAIN
-  clv
   
   ; Move point reset
   lda #$00
@@ -180,17 +191,9 @@ MOVE_UP:
   jmp MAIN
 
 MOVE_DOWN:
-
   ; Vertical flip (via PPU OAM ports)
-  lda #%10000000
-  sta $0202
-
-  ; Rate limit
-  inc player_velocity_counter
-  lda player_velocity_counter
-  and #%11000000
-  beq MAIN
-  clv
+  ;lda #%10000000
+  ;sta $0202
 
   ; Move point reset
   lda #$00
@@ -199,10 +202,22 @@ MOVE_DOWN:
   inc $0200
   jmp MAIN
 
+POLL_FLIP_FLOPS:
+  lda #$01
+  sta $4016
+  sta buttons1
+  lsr a
+  sta $4016
+  :
+    lda $4016
+    lsr a
+    rol buttons1
+    bcc :-
+  rts
+
 NMI:
   lda #$00
   sta $2003
   lda #$02
   sta $4014
   rti
-
