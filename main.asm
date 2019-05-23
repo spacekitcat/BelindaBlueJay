@@ -21,6 +21,10 @@ palette:
 .byte $00,$1B,$2B,$3B
 .byte $00,$12,$22,$32
 
+.zeropage
+buttons1: .res 1
+buttons2: .res 1
+
 .segment "STARTUP"
 IRQ:
 RESET:
@@ -96,6 +100,46 @@ INIT_PPU:
   sta $2001
 
 MAIN:
+INPUT:
+  lda #$01
+  sta $4016
+  sta buttons1
+  lsr a
+  sta $4016
+  :
+    lda $4016
+    lsr a
+    rol buttons1
+    bcc :-
+  
+  lda buttons1
+  and #%00000001
+  bne MOVE_RIGHT
+  lda buttons1
+  and #%00000010
+  bne MOVE_LEFT
+  lda buttons1
+  and #%00001000
+  bne MOVE_UP
+  lda buttons1
+  and #%00000100
+  bne MOVE_DOWN
+  jmp MAIN
+
+MOVE_RIGHT:
+  inc $0203
+  jmp MAIN
+
+MOVE_LEFT:
+  dec $0203
+  jmp MAIN
+
+MOVE_UP:
+  dec $0200
+  jmp MAIN
+
+MOVE_DOWN:
+  inc $0200
   jmp MAIN
 
 NMI:
