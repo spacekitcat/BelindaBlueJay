@@ -24,6 +24,7 @@ palette:
 .zeropage
 buttons1: .res 1
 buttons2: .res 1
+player_velocity_counter: .res 1
 
 .segment "STARTUP"
 IRQ:
@@ -67,6 +68,8 @@ BOOT_STRAP:
   sta $2006
   lda $00
   sta $2006
+  lda #$00
+  sta player_velocity_counter
 
 	lda #%10001000
 	sta $2000
@@ -127,18 +130,72 @@ INPUT:
   jmp MAIN
 
 MOVE_RIGHT:
+  ; Rate limit
+  inc player_velocity_counter
+  lda player_velocity_counter
+  and #%11000000
+  beq MAIN
+  clv
+
+  ; Move point reset
+  lda #$00
+  sta player_velocity_counter
+
   inc $0203
   jmp MAIN
 
 MOVE_LEFT:
+  ; Rate limit
+  inc player_velocity_counter
+  lda player_velocity_counter
+  and #%11000000
+  beq MAIN
+  clv
+
+  ; Move point reset
+  lda #$00
+  sta player_velocity_counter
+
   dec $0203
   jmp MAIN
 
 MOVE_UP:
+
+  ; Vertical flip (via PPU OAM ports)
+  lda #%00000000
+  sta $0202
+
+  ; Rate limit
+  inc player_velocity_counter
+  lda player_velocity_counter
+  and #%11000000
+  beq MAIN
+  clv
+  
+  ; Move point reset
+  lda #$00
+  sta player_velocity_counter
+
   dec $0200
   jmp MAIN
 
 MOVE_DOWN:
+
+  ; Vertical flip (via PPU OAM ports)
+  lda #%10000000
+  sta $0202
+
+  ; Rate limit
+  inc player_velocity_counter
+  lda player_velocity_counter
+  and #%11000000
+  beq MAIN
+  clv
+
+  ; Move point reset
+  lda #$00
+  sta player_velocity_counter
+
   inc $0200
   jmp MAIN
 
@@ -148,3 +205,4 @@ NMI:
   lda #$02
   sta $4014
   rti
+
