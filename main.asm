@@ -11,18 +11,19 @@
 
 .segment "RODATA"
 palette:
-.byte $12,$15,$25,$15
+.byte $12,$15,$2A,$15
 .byte $00,$09,$19,$29
 .byte $00,$01,$11,$21
 .byte $00,$00,$10,$30
 
-.byte $25,$35,$2c,$35
+.byte $1E,$25,$25,$25
 .byte $00,$14,$24,$34
 .byte $00,$1B,$2B,$3B
 .byte $00,$12,$22,$32
 
 .zeropage
-buttons1: .res 1
+buttons1_sample1: .res 1
+buttons1_sample2: .res 1
 buttons2: .res 1
 player_velocity_counter: .res 1
 player_sprite_direction: .res 1
@@ -32,14 +33,15 @@ IRQ:
 RESET:
   sei
   cld
-  ldx #$40
-  stx $4017
-  ldx #$FF
-  txs
-  inx ; Is this zero or does it just have the negative bit set?
-  stx $2000
-  stx $2001
-  stx $4010
+
+  lda #$40
+  sta $4017
+  
+  lda #$00
+  sta $2000
+  sta $2001
+  sta $4010
+  txa
 
 VBLANKWAIT1:
   bit $2002
@@ -114,24 +116,39 @@ INIT_PPU:
 
 MAIN:
   jsr POLL_FLIP_FLOPS
+  lda buttons1_sample1
+  and buttons1_sample2
+  bne END_MAIN
   jsr PARSE_INPUT
 END_MAIN:
   jmp MAIN
 
 PARSE_INPUT:
   jsr RATE_LIMIT
-  lda buttons1
+CHECK_RIGHT:
+  lda buttons1_sample1
   and #%00000001
-  bne MOVE_RIGHT
-  lda buttons1
+  beq CHECK_LEFT
+  jsr MOVE_RIGHT
+CHECK_LEFT:
+  lda buttons1_sample1
   and #%00000010
-  bne MOVE_LEFT
-  lda buttons1
-  and #%00001000
-  bne MOVE_UP
-  lda buttons1
+  beq CHECK_DOWN
+  jsr MOVE_LEFT
+CHECK_DOWN:
+  lda buttons1_sample1
   and #%00000100
-  bne MOVE_DOWN
+  beq CHECK_UP
+  jsr MOVE_DOWN
+CHECK_UP:
+  lda buttons1_sample1
+  and #%00001000
+  beq END_PARSE_INPUT
+  jsr MOVE_UP
+
+END_PARSE_INPUT:
+  lda #$00
+  sta buttons1_sample1
   rts
 
 RATE_LIMIT:
@@ -143,77 +160,65 @@ RATE_LIMIT:
   clv
   rts
 
-MOVE_RIGHT:
-  ; Switch sprite sheet
-  lda #$00000001
-  sta player_sprite_direction
-
-  ; Move point reset
+CLEAR_RATE_LIMIT:
   lda #$00
   sta player_velocity_counter
+  rts
 
+MOVE_RIGHT:
+  ; Tell the PPU to flip the sprite on y
+  lda #%01000000
+  sta $0202
+  ; Switch sprite sheet
+  lda #$02
+  sta $0201
+  jsr CLEAR_RATE_LIMIT
   inc $0203
-  jmp MAIN
+  rts
 
 MOVE_LEFT:
-  ; Switch sprite sheet
-  lda #$00000001
-  sta player_sprite_direction
-
-  ; Rate limit
-  inc player_velocity_counter
-  lda player_velocity_counter
-  and #%11000000
-  beq MAIN
-  clv
-
-  ; Move point reset
-  lda #$00
-  sta player_velocity_counter
-
-  dec $0203
-  jmp MAIN
-
-MOVE_UP:
-  ; Switch sprite sheet
-  ;lda #$00000000
-  ;sta player_sprite_direction
-
-  ; Vertical flip (via PPU OAM ports)
+  ; Tell the PPU to flip the sprite on y
   lda #%00000000
   sta $0202
-  
-  ; Move point reset
-  lda #$00
-  sta player_velocity_counter
+  ; Switch sprite sheet
+  lda #$02
+  sta $0201
+  jsr CLEAR_RATE_LIMIT
+  dec $0203
+  rts
 
+MOVE_UP:
+  ; Tell the PPU to flip the sprite on y
+  lda #%00000000
+  sta $0202
+  ; Switch sprite sheet
+  lda #$07
+  sta $0201
+  jsr CLEAR_RATE_LIMIT
   dec $0200
-  jmp MAIN
+  rts
 
 MOVE_DOWN:
-  ; Vertical flip (via PPU OAM ports)
-  ;lda #%10000000
-  ;sta $0202
-
-  ; Move point reset
-  lda #$00
-  sta player_velocity_counter
-
+  ; Switch sprite sheet
+  lda #$03
+  sta $0201
+  jsr CLEAR_RATE_LIMIT
   inc $0200
-  jmp MAIN
-
+  rts
+  
 POLL_FLIP_FLOPS:
   lda #$01
   sta $4016
-  sta buttons1
-  lsr a
+  sta buttons1_sample1
+  lda #$00
   sta $4016
   :
     lda $4016
     lsr a
-    rol buttons1
+    rol buttons1_sample1
     bcc :-
   rts
+  
 
 NMI:
   lda #$00
