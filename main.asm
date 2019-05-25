@@ -95,13 +95,6 @@ INIT_PPU_MIRROR_RAM:
 
   lda #$00
   sta $0201 ; Tile number.
-
-  lda player_sprite_direction
-  cmp #%000000010
-  bne DONE
-  lda #$02
-  sta $0201 ; Tile number.
-DONE:
   
   lda #%00010000
   sta $0202 ; Attributes.
@@ -115,10 +108,21 @@ INIT_PPU:
   sta $2001
 
 MAIN:
-  jsr POLL_FLIP_FLOPS
+REREAD:
   lda buttons1_sample1
-  and buttons1_sample2
-  bne END_MAIN
+  pha
+  jsr POLL_INPUT
+  pla
+  cmp buttons1_sample1
+  bne REREAD
+
+  lda buttons1_sample1
+  pha
+  jsr POLL_INPUT
+  pla
+  cmp buttons1_sample1
+  bne REREAD
+
   jsr PARSE_INPUT
 END_MAIN:
   jmp MAIN
@@ -147,8 +151,6 @@ CHECK_UP:
   jsr MOVE_UP
 
 END_PARSE_INPUT:
-  lda #$00
-  sta buttons1_sample1
   rts
 
 RATE_LIMIT:
@@ -206,7 +208,7 @@ MOVE_DOWN:
   inc $0200
   rts
   
-POLL_FLIP_FLOPS:
+POLL_INPUT:
   lda #$01
   sta $4016
   sta buttons1_sample1
@@ -218,11 +220,15 @@ POLL_FLIP_FLOPS:
     rol buttons1_sample1
     bcc :-
   rts
-  
 
 NMI:
   lda #$00
   sta $2003
   lda #$02
   sta $4014
+
+  lda #$01
+  sta $4016
+  lda #$00
+  sta $4016
   rti
