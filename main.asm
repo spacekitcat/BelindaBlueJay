@@ -16,7 +16,7 @@ palette:
 .byte $00,$01,$11,$21
 .byte $00,$00,$10,$30
 
-.byte $1E,$25,$25,$25
+.byte $00,$12,$26,$2f
 .byte $00,$14,$24,$34
 .byte $00,$1B,$2B,$3B
 .byte $00,$12,$22,$32
@@ -128,6 +128,8 @@ END_MAIN:
   jmp MAIN
 
 PARSE_INPUT:
+  jsr SELECT_SPRITE
+
   jsr RATE_LIMIT
 CHECK_RIGHT:
   lda buttons1_sample1
@@ -168,42 +170,21 @@ CLEAR_RATE_LIMIT:
   rts
 
 MOVE_RIGHT:
-  ; Tell the PPU to flip the sprite on y
-  lda #%01000000
-  sta $0202
-  ; Switch sprite sheet
-  lda #$02
-  sta $0201
   jsr CLEAR_RATE_LIMIT
   inc $0203
   rts
 
 MOVE_LEFT:
-  ; Tell the PPU to flip the sprite on y
-  lda #%00000000
-  sta $0202
-  ; Switch sprite sheet
-  lda #$02
-  sta $0201
   jsr CLEAR_RATE_LIMIT
   dec $0203
   rts
 
 MOVE_UP:
-  ; Tell the PPU to flip the sprite on y
-  lda #%00000000
-  sta $0202
-  ; Switch sprite sheet
-  lda #$07
-  sta $0201
   jsr CLEAR_RATE_LIMIT
   dec $0200
-  rts
+  rts 
 
 MOVE_DOWN:
-  ; Switch sprite sheet
-  lda #$03
-  sta $0201
   jsr CLEAR_RATE_LIMIT
   inc $0200
   rts
@@ -232,3 +213,89 @@ NMI:
   lda #$00
   sta $4016
   rti
+
+; Uses buttons1_sample1 to determine the current sprite
+SELECT_SPRITE:
+NORTH_EAST:
+  lda buttons1_sample1
+  and #%00001001
+  cmp #%00001001
+  bne NORTH_WEST
+  lda #$00
+  sta $0201
+  lda #%00000000
+  sta $0202
+  jmp END_SELECT_SPRITE
+NORTH_WEST:
+  lda buttons1_sample1
+  and #%00001010
+  cmp #%00001010
+  bne SOUTH_EAST
+  lda #$00
+  sta $0201
+  lda #%01000000
+  sta $0202
+  jmp END_SELECT_SPRITE
+SOUTH_EAST:
+  lda buttons1_sample1
+  and #%00000101
+  cmp #%00000101
+  bne SOUTH_WEST
+  lda #$00
+  sta $0201
+  lda #%10000000
+  sta $0202
+  jmp END_SELECT_SPRITE
+SOUTH_WEST:
+  lda buttons1_sample1
+  and #%00000110
+  cmp #%00000110
+  bne NORTH
+  lda #$00
+  sta $0201
+  lda #%11000000
+  sta $0202
+  jmp END_SELECT_SPRITE
+NORTH:
+  lda buttons1_sample1
+  and #%00001000
+  cmp #%00001000
+  bne EAST
+  lda #$01
+  sta $0201
+  lda #%00000000
+  sta $0202
+  jmp END_SELECT_SPRITE
+EAST:
+  lda buttons1_sample1
+  and #%00000001
+  cmp #%00000001
+  bne SOUTH
+  lda #$02
+  sta $0201
+  lda #%00000000
+  sta $0202
+  jmp END_SELECT_SPRITE
+SOUTH:
+  lda buttons1_sample1
+  and #%00000100
+  cmp #%00000100
+  bne WEST
+  lda #$01
+  sta $0201
+  lda #%10000000
+  sta $0202
+  jmp END_SELECT_SPRITE
+WEST:
+  lda buttons1_sample1
+  and #%00000010
+  cmp #%00000010
+  bne END_SELECT_SPRITE
+  lda #$02
+  sta $0201
+  lda #%01000000
+  sta $0202
+  jmp END_SELECT_SPRITE
+
+END_SELECT_SPRITE:
+  rts
