@@ -190,22 +190,26 @@ POLL_INPUT:
   rts
 
 NMI:
+PPU_WRITE:
+  ; Ask the DMA at $4014 to copy $0200-$02FF in RAM into the OAM table $02
   lda #$00
   sta $2003
   lda #$02
   sta $4014
-
+LATCH_CONTROLLER:
+  ; Phantom input and other glitches will occur if you don't do this.
   lda #$01
   sta $4016
   lda #$00
   sta $4016
+END_NMI:
   rti
 
-; Uses buttons1_sample1 to determine the current sprite
+; Depends on buttons1_sample1 having the controller status bitfield.
 SELECT_SPRITE:
-NORTH_EAST:
   lda buttons1_sample1
-  and #%00001001
+  and #%00001111
+NORTH_EAST:
   cmp #%00001001
   bne NORTH_WEST
   lda #$00
@@ -214,8 +218,6 @@ NORTH_EAST:
   sta $0202
   jmp END_SELECT_SPRITE
 NORTH_WEST:
-  lda buttons1_sample1
-  and #%00001010
   cmp #%00001010
   bne SOUTH_EAST
   lda #$00
@@ -224,8 +226,6 @@ NORTH_WEST:
   sta $0202
   jmp END_SELECT_SPRITE
 SOUTH_EAST:
-  lda buttons1_sample1
-  and #%00000101
   cmp #%00000101
   bne SOUTH_WEST
   lda #$00
@@ -234,8 +234,6 @@ SOUTH_EAST:
   sta $0202
   jmp END_SELECT_SPRITE
 SOUTH_WEST:
-  lda buttons1_sample1
-  and #%00000110
   cmp #%00000110
   bne NORTH
   lda #$00
@@ -244,8 +242,6 @@ SOUTH_WEST:
   sta $0202
   jmp END_SELECT_SPRITE
 NORTH:
-  lda buttons1_sample1
-  and #%00001000
   cmp #%00001000
   bne EAST
   lda #$01
@@ -254,8 +250,6 @@ NORTH:
   sta $0202
   jmp END_SELECT_SPRITE
 EAST:
-  lda buttons1_sample1
-  and #%00000001
   cmp #%00000001
   bne SOUTH
   lda #$02
@@ -264,8 +258,6 @@ EAST:
   sta $0202
   jmp END_SELECT_SPRITE
 SOUTH:
-  lda buttons1_sample1
-  and #%00000100
   cmp #%00000100
   bne WEST
   lda #$01
@@ -274,8 +266,6 @@ SOUTH:
   sta $0202
   jmp END_SELECT_SPRITE
 WEST:
-  lda buttons1_sample1
-  and #%00000010
   cmp #%00000010
   bne END_SELECT_SPRITE
   lda #$02
