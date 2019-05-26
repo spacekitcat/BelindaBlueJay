@@ -43,24 +43,11 @@ RESET:
   sta $4010
   txa
 
+; We have to let 29658 cycles pass so that the console can get itself ready
+  bit $2002
 VBLANKWAIT1:
   bit $2002
   bpl VBLANKWAIT1
-
-CLR_MEM:
-  lda #$00
-  sta $0000, x
-  sta $0100, x
-  sta $0300, x
-  sta $0400, x
-  sta $0500, x
-  sta $0600, x
-  sta $0700, x
-  lda #$FE
-  sta $0200, x
-  inx
-  bne CLR_MEM
-
 VBLANKWAIT2:
   bit $2002
   bpl VBLANKWAIT2
