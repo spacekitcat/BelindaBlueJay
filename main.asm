@@ -11,22 +11,19 @@
 
 .segment "RODATA"
 palette:
-.byte $3a,$15,$2A,$15
-.byte $00,$09,$19,$29
-.byte $00,$01,$11,$21
-.byte $00,$00,$10,$30
+.byte $01,$02,$03,$04
+.byte $00,$00,$00,$00
+.byte $00,$00,$00,$00
+.byte $00,$00,$00,$00
 
 .byte $39,$20,$11,$2D
-.byte $00,$14,$24,$34
-.byte $00,$1B,$2B,$3B
-.byte $00,$12,$22,$32
+.byte $00,$00,$00,$00
+.byte $00,$00,$00,$00
+.byte $00,$00,$00,$00
 
 .zeropage
-buttons1_sample1: .res 1
-buttons1_sample2: .res 1
-buttons2: .res 1
-player_velocity_counter: .res 1
-player_sprite_direction: .res 1
+last_controller_state: .res 1
+player_move_rate_limit_counter: .res 1
 
 .segment "STARTUP"
 IRQ:
@@ -59,22 +56,9 @@ BOOT_STRAP:
   lda $00
   sta $2006
   lda #$00
-  sta player_velocity_counter
+  sta player_move_rate_limit_counter
 
-	lda #%10001000
-	sta $2000
-	lda $2002
-	lda #$3F
-	sta $2006
-  lda #$00
-	stx $2006
-	ldx #0
-	:
-		lda palette, X
-		sta $2007
-		inx
-		cpx #32
-    bcc :-
+  jsr LOAD_PALETTE
 
 INIT_PPU_MIRROR_RAM:
   lda #$B0
@@ -96,45 +80,62 @@ INIT_PPU:
 
 MAIN:
 REREAD:
-  lda buttons1_sample1
+  lda last_controller_state
   pha
   jsr POLL_INPUT
   pla
-  cmp buttons1_sample1
+  cmp last_controller_state
   bne REREAD
 
-  lda buttons1_sample1
+  lda last_controller_state
   pha
   jsr POLL_INPUT
   pla
-  cmp buttons1_sample1
+  cmp last_controller_state
   bne REREAD
 
   jsr PARSE_INPUT
 END_MAIN:
   jmp MAIN
 
+LOAD_PALETTE:
+	lda #%10001000
+	sta $2000
+	lda $2002
+	lda #$3F
+	sta $2006
+  lda #$00
+	stx $2006
+	ldx #0
+	:
+		lda palette, X
+		sta $2007
+		inx
+		cpx #32
+    bcc :-
+  rts
+
 PARSE_INPUT:
   jsr SELECT_SPRITE
 
   jsr RATE_LIMIT
 CHECK_RIGHT:
-  lda buttons1_sample1
+  lda last_controller_state
   and #%00000001
   beq CHECK_LEFT
   jsr MOVE_RIGHT
 CHECK_LEFT:
-  lda buttons1_sample1
+  lda last_controller_state
   and #%00000010
   beq CHECK_DOWN
   jsr MOVE_LEFT
 CHECK_DOWN:
-  lda buttons1_sample1
+  lda last_controller_state
   and #%00000100
   beq CHECK_UP
   jsr MOVE_DOWN
 CHECK_UP:
-  lda buttons1_sample1
+  lda last_controller_state
   and #%00001000
   beq END_PARSE_INPUT
   jsr MOVE_UP
@@ -144,8 +145,8 @@ END_PARSE_INPUT:
 
 RATE_LIMIT:
   ; Rate limit
-  inc player_velocity_counter
-  lda player_velocity_counter
+  inc player_move_rate_limit_counter
+  lda player_move_rate_limit_counter
   and #%11000000
   beq MAIN
   clv
@@ -153,7 +154,7 @@ RATE_LIMIT:
 
 CLEAR_RATE_LIMIT:
   lda #$00
-  sta player_velocity_counter
+  sta player_move_rate_limit_counter
   rts
 
 MOVE_RIGHT:
@@ -179,13 +180,13 @@ MOVE_DOWN:
 POLL_INPUT:
   lda #$01
   sta $4016
-  sta buttons1_sample1
+  sta last_controller_state
   lda #$00
   sta $4016
   :
     lda $4016
     lsr a
-    rol buttons1_sample1
+    rol last_controller_state
     bcc :-
   rts
 
@@ -205,9 +206,9 @@ LATCH_CONTROLLER:
 END_NMI:
   rti
 
-; Depends on buttons1_sample1 having the controller status bitfield.
+; Depends on last_controller_state having the controller status bitfield.
 SELECT_SPRITE:
-  lda buttons1_sample1
+  lda last_controller_state
   and #%00001111
 NORTH_EAST:
   cmp #%00001001
