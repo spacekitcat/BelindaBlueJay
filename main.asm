@@ -10,6 +10,7 @@
   .word IRQ
 
 .segment "RODATA"
+
 palette:
 .byte $01,$02,$03,$04
 .byte $00,$00,$00,$00
@@ -20,6 +21,16 @@ palette:
 .byte $00,$00,$00,$00
 .byte $00,$00,$00,$00
 .byte $00,$00,$00,$00
+
+background:
+  .byte $24,$24,$24,$24,$24,$24,$24,$24
+  .byte $24,$24,$24,$24,$24,$24,$24,$24
+
+  .byte $0b,$0e,$15,$12,$17,$0d,$0a,$24
+  .byte $24,$24,$24,$24,$24,$24,$24,$24
+
+attribute:
+  .byte %11111111
 
 .define controller_up_bitfield #%00001000
 .define controller_down_bitfield #%00000100
@@ -64,6 +75,27 @@ BOOT_STRAP:
   sta player_move_rate_limit_counter
 
   jsr LOAD_PALETTE
+LOAD_BACKGROUND:
+  LDA #$20
+  STA $2006
+  LDA #$00
+  STA $2006
+  LDX #$00
+  :
+    LDA background, x
+    STA $2007
+    INX
+    CPX #$20
+    BNE :-
+
+LOAD_ATTRIBUTES:
+  LDA #$23
+  STA $2006
+  LDA #$C0
+  STA $2006
+  LDX #$00
+  LDA attribute, x
+  STA $2007
 
 INIT_PPU_MIRROR_RAM:
   lda #$B0
@@ -78,9 +110,9 @@ INIT_PPU_MIRROR_RAM:
   sta $0203 ; X.
 
 INIT_PPU:
-  lda #%10000000
+  lda #%10010000
   sta $2000
-  lda #%00010000
+  lda #%00011110
   sta $2001
 
 MAIN:
