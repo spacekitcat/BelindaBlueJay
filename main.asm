@@ -21,6 +21,11 @@ palette:
 .byte $00,$00,$00,$00
 .byte $00,$00,$00,$00
 
+.define controller_up_bitfield #%00001000
+.define controller_down_bitfield #%00000100
+.define controller_left_bitfield #%00000010
+.define controller_right_bitfield #%00000001
+
 .zeropage
 last_controller_state: .res 1
 player_move_rate_limit_counter: .res 1
@@ -121,22 +126,22 @@ PARSE_INPUT:
   jsr RATE_LIMIT
 CHECK_RIGHT:
   lda last_controller_state
-  and #%00000001
+  and controller_right_bitfield
   beq CHECK_LEFT
   jsr MOVE_RIGHT
 CHECK_LEFT:
   lda last_controller_state
-  and #%00000010
+  and controller_left_bitfield
   beq CHECK_DOWN
   jsr MOVE_LEFT
 CHECK_DOWN:
   lda last_controller_state
-  and #%00000100
+  and controller_down_bitfield
   beq CHECK_UP
   jsr MOVE_DOWN
 CHECK_UP:
   lda last_controller_state
-  and #%00001000
+  and controller_up_bitfield
   beq END_PARSE_INPUT
   jsr MOVE_UP
 
