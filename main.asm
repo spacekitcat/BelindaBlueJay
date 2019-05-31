@@ -83,9 +83,7 @@ LOAD_BACKGROUND:
     lda background1, x
     sta $2007
     inx
-    ;cpx #$E0
-    ;cpx #$80
-    cpx #$20
+    cpx #$FF
     bne :-
 
 LOAD_ATTRIBUTES:
