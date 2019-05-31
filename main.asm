@@ -12,25 +12,31 @@
 .segment "RODATA"
 
 palette:
-.byte $01,$02,$03,$04
+.byte $00,$2a,$23,$a4
 .byte $00,$00,$00,$00
+.byte $00,$00,$00,$00
+.byte $00,$00,$00,$00
+.byte $36,$20,$11,$2D
+.byte $44,$00,$00,$00
+
 .byte $00,$00,$00,$00
 .byte $00,$00,$00,$00
 
-.byte $39,$20,$11,$2D
-.byte $00,$00,$00,$00
-.byte $00,$00,$00,$00
-.byte $00,$00,$00,$00
-
-background:
-  .byte $24,$24,$24,$24,$24,$24,$24,$24
-  .byte $24,$24,$24,$24,$24,$24,$24,$24
-
-  .byte $0b,$0e,$15,$12,$17,$0d,$0a,$24
-  .byte $24,$24,$24,$24,$24,$24,$24,$24
+background1:
+  .incbin "name-table.dat"
 
 attribute:
-  .byte %11111111
+  .byte %11111111,%11111111,%11111111,%11111111,%00000000,%00000000,%11111111,%11111111
+  .byte %11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111
+
+  .byte %11111111,%11111111,%11111111,%11111111,%11111101,%11111111,%11111111,%11111111
+  .byte %11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111
+
+  .byte %11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111
+  .byte %11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111
+
+  .byte %11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111
+  .byte %11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111
 
 .define controller_up_bitfield #%00001000
 .define controller_down_bitfield #%00000100
@@ -46,15 +52,6 @@ IRQ:
 RESET:
   sei
   cld
-
-  lda #$40
-  sta $4017
-  
-  lda #$00
-  sta $2000
-  sta $2001
-  sta $4010
-  txa
 
 ; We have to let 29658 cycles pass so that the console can get itself ready
   bit $2002
@@ -76,26 +73,34 @@ BOOT_STRAP:
 
   jsr LOAD_PALETTE
 LOAD_BACKGROUND:
-  LDA #$20
+  lda $2002
+  lda #$20
   STA $2006
-  LDA #$00
-  STA $2006
-  LDX #$00
+  lda #$00
+  sta $2006
+  ldx #$00
   :
-    LDA background, x
-    STA $2007
-    INX
-    CPX #$20
-    BNE :-
+    lda background1, x
+    sta $2007
+    inx
+    ;cpx #$E0
+    ;cpx #$80
+    cpx #$20
+    bne :-
 
 LOAD_ATTRIBUTES:
-  LDA #$23
-  STA $2006
-  LDA #$C0
-  STA $2006
-  LDX #$00
-  LDA attribute, x
-  STA $2007
+  lda $2004
+  lda #$23
+  sta $2006
+  lda #$c0
+  sta $2006
+  ldx #$00
+  :
+    lda attribute, x
+    sta $2007;
+    inx
+    cpx #$40
+    bne :-
 
 INIT_PPU_MIRROR_RAM:
   lda #$B0
@@ -181,10 +186,9 @@ END_PARSE_INPUT:
   rts
 
 RATE_LIMIT:
-  ; Rate limit
   inc player_move_rate_limit_counter
   lda player_move_rate_limit_counter
-  and #%11000000
+  and #%01000000
   beq MAIN
   clv
   rts
@@ -241,6 +245,9 @@ LATCH_CONTROLLER:
   lda #$00
   sta $4016
 END_NMI:
+  lda #$00
+  sta $2005
+  sta $2005
   rti
 
 ; Depends on last_controller_state having the controller status bitfield.

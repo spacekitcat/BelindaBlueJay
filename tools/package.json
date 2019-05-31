@@ -1,0 +1,22 @@
+{
+  "name": "belinda-bluejay-nes-6502-toolset",
+  "version": "1.0.0",
+  "description": "An assortment of tools used to create Belinda Bluejay",
+  "main": "main.js",
+  "scripts": {
+    "test": "jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spacekitcat/BelindaBlueJay.git"
+  },
+  "author": "Lisa Burton",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/spacekitcat/BelindaBlueJay/issues"
+  },
+  "homepage": "https://github.com/spacekitcat/BelindaBlueJay#readme",
+  "dependencies": {
+    "jest": "^24.8.0"
+  }
+}
