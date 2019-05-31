@@ -16,6 +16,24 @@ You need to get the `ca65` assembler and make sure the executable is resolvable 
 
 You can just open the `rom.nes` file in a NES emulator, safest bet would be Nestopia (other ones might work, I've not tried). I wouldn't ordinarily add compiled binaries to a Git repo, but they're only 40KB and saves a lot of hassle.
 
+## Tools
+
+The tools folder has one tool for generating a 960 byte name table, initialised with `0x24`, modify the first parameter passed to the `generateBlankNameTable` function in `tools/main.js` to make it use some other blanking byte.
+
+N.B. Requires Node.js, version 10 or above is recommended.
+
+```bash
+belinda-the-bluejay-6502-nes <master> % node scripts/main.js
+
+belinda-the-bluejay-6502-nes <master> % ls -la name-table.dat
+-rw-r--r--  1 burtol86  287753940  960 31 May 20:40 name-table.dat
+
+belinda-the-bluejay-6502-nes <master> % hexdump name-table.dat
+0000000 24 24 24 24 24 24 24 24 24 24 24 24 24 24 24 24
+*
+00003c0
+```
+
 ## Resources
 
 |URL|Content|Type|
