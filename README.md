@@ -18,20 +18,27 @@ You can just open the `rom.nes` file in a NES emulator, safest bet would be Nest
 
 ## Tools
 
-The tools folder has one tool for generating a 960 byte name table, initialised with `0x24`, modify the first parameter passed to the `generateBlankNameTable` function in `tools/main.js` to make it use some other blanking byte.
+The tools folder has one tool for generating a name table in two 480 byte components initialised with `0x24`. The name table is split in two because it allows it be processed by the assembly code with only 8-bit numbers. Check out the source code to see further what I mean.
+
+To use a different blanking char, modify the first parameter passed to the `generateBlankNameTable` function in `tools/main.js`.
 
 N.B. Requires Node.js, version 10 or above is recommended.
 
 ```bash
-belinda-the-bluejay-6502-nes <master> % node scripts/main.js
+belinda-the-bluejay-6502-nes <master> % node tools/main.js
 
-belinda-the-bluejay-6502-nes <master> % ls -la name-table.dat
--rw-r--r--  1 burtol86  287753940  960 31 May 20:40 name-table.dat
+belinda-the-bluejay-6502-nes <master> % ls -la
+-rw-r--r--   1 burtol86  287753940    480  8 Aug 12:52 name-table-0.dat
+-rw-r--r--   1 burtol86  287753940    480  8 Aug 12:52 name-table-1.dat
 
-belinda-the-bluejay-6502-nes <master> % hexdump name-table.dat
+
+belinda-the-bluejay-6502-nes <master> % hexdump name-table-0.dat
 0000000 24 24 24 24 24 24 24 24 24 24 24 24 24 24 24 24
 *
-00003c0
+
+belinda-the-bluejay-6502-nes <master> % hexdump name-table-1.dat
+0000000 24 24 24 24 24 24 24 24 24 24 24 24 24 24 24 24
+*
 ```
 
 ## Resources
