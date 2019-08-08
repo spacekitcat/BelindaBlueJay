@@ -43,6 +43,8 @@ attribute:
 .define controller_left_bitfield #%00000010
 .define controller_right_bitfield #%00000001
 
+.define PPU_ADDR $2006
+
 .zeropage
 last_controller_state: .res 1
 player_move_rate_limit_counter: .res 1
@@ -65,19 +67,19 @@ VBLANKWAIT2:
 BOOT_STRAP:
   lda $2002
   lda #$3F
-  sta $2006
+  sta PPU_ADDR
   lda $00
-  sta $2006
+  sta PPU_ADDR
   lda #$00
   sta player_move_rate_limit_counter
 
   jsr LOAD_PALETTE
 LOAD_BACKGROUND:
-  lda $2002
+  ;lda $2002
   lda #$20
-  STA $2006
+  STA PPU_ADDR
   lda #$00
-  sta $2006
+  sta PPU_ADDR
   ldx #$00
   :
     lda background1, x
@@ -89,9 +91,9 @@ LOAD_BACKGROUND:
 LOAD_ATTRIBUTES:
   lda $2004
   lda #$23
-  sta $2006
+  sta PPU_ADDR
   lda #$c0
-  sta $2006
+  sta PPU_ADDR
   ldx #$00
   :
     lda attribute, x
@@ -143,9 +145,9 @@ LOAD_PALETTE:
 	sta $2000
 	lda $2002
 	lda #$3F
-	sta $2006
+	sta PPU_ADDR
   lda #$00
-	stx $2006
+	stx PPU_ADDR
 	ldx #0
 	:
 		lda palette, X
