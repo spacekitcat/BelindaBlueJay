@@ -17,7 +17,7 @@ palette:
 .byte $3C,$11,$21,$31
 .byte $3C,$11,$21,$31
 
-.byte $3C,$20,$11,$2D
+.byte $3C,$30,$29,$19
 .byte $44,$00,$00,$00
 .byte $00,$00,$00,$00
 .byte $00,$00,$00,$00
@@ -54,6 +54,10 @@ attribute:
 .zeropage
 last_controller_state: .res 1
 player_move_rate_limit_counter: .res 1
+animation_bishop: .res 1
+animation_vertical: .res 1
+animation_horizontal: .res 1
+animation_rate_count: .res 1
 
 .segment "STARTUP"
 IRQ:
@@ -78,6 +82,8 @@ BOOT_STRAP:
   sta PPU_ADDR
   lda #$00
   sta player_move_rate_limit_counter
+  sta animation_bishop
+  sta animation_vertical
 
   jsr LOAD_PALETTE
 LOAD_BACKGROUND:
@@ -282,6 +288,30 @@ LATCH_CONTROLLER:
   sta $4016
   lda #$00
   sta $4016
+  lda animation_rate_count
+  and #%11111111
+  bne SPRITE_ROTATE
+  lda #$00
+  sta animation_rate_count
+SPRITE_ROTATE:
+  lda animation_bishop
+  cmp #$00
+  bne SPRITE_ROTATE_RST
+  lda #$03
+  sta animation_bishop
+  lda #$04
+  sta animation_vertical
+  lda #$05
+  sta animation_horizontal
+  jmp END_NMI
+SPRITE_ROTATE_RST:
+  inc animation_rate_count
+  lda #$00
+  sta animation_bishop
+  lda #$01
+  sta animation_vertical
+  lda #$02
+  sta animation_horizontal
 END_NMI:
   lda #$00
   sta $2005
@@ -295,7 +325,7 @@ SELECT_SPRITE:
 NORTH_EAST:
   cmp #%00001001
   bne NORTH_WEST
-  lda #$00
+  lda animation_bishop
   sta $0201
   lda #%00000000
   sta $0202
@@ -303,7 +333,7 @@ NORTH_EAST:
 NORTH_WEST:
   cmp #%00001010
   bne SOUTH_EAST
-  lda #$00
+  lda animation_bishop
   sta $0201
   lda #%01000000
   sta $0202
@@ -311,7 +341,7 @@ NORTH_WEST:
 SOUTH_EAST:
   cmp #%00000101
   bne SOUTH_WEST
-  lda #$00
+  lda animation_bishop
   sta $0201
   lda #%10000000
   sta $0202
@@ -319,7 +349,7 @@ SOUTH_EAST:
 SOUTH_WEST:
   cmp #%00000110
   bne NORTH
-  lda #$00
+  lda animation_bishop
   sta $0201
   lda #%11000000
   sta $0202
@@ -327,7 +357,7 @@ SOUTH_WEST:
 NORTH:
   cmp #%00001000
   bne EAST
-  lda #$01
+  lda animation_vertical
   sta $0201
   lda #%00000000
   sta $0202
@@ -335,7 +365,8 @@ NORTH:
 EAST:
   cmp #%00000001
   bne SOUTH
-  lda #$02
+  ldx #$01
+  lda animation_horizontal
   sta $0201
   lda #%00000000
   sta $0202
@@ -343,7 +374,7 @@ EAST:
 SOUTH:
   cmp #%00000100
   bne WEST
-  lda #$01
+  lda animation_vertical
   sta $0201
   lda #%10000000
   sta $0202
@@ -351,7 +382,7 @@ SOUTH:
 WEST:
   cmp #%00000010
   bne END_SELECT_SPRITE
-  lda #$02
+  lda animation_horizontal
   sta $0201
   lda #%01000000
   sta $0202
