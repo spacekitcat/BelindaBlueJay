@@ -1,3 +1,5 @@
+.include "boot.asm"
+
 .segment "HEADER"
   .byte "NES",26,2,1
 
@@ -62,17 +64,7 @@ animation_rate_count: .res 1
 .segment "STARTUP"
 IRQ:
 RESET:
-  sei
-  cld
-
-; We have to let 29658 cycles pass so that the console can get itself ready
-  bit $2002
-VBLANKWAIT1:
-  bit $2002
-  bpl VBLANKWAIT1
-VBLANKWAIT2:
-  bit $2002
-  bpl VBLANKWAIT2
+  jsr BootConsole
 
 BOOT_STRAP:
   lda $2002
@@ -84,6 +76,17 @@ BOOT_STRAP:
   sta player_move_rate_limit_counter
   sta animation_bishop
   sta animation_vertical
+
+;SND:
+  ;lda #%00000111
+  ;sta $4015
+
+  ;lda #%00111000
+  ;sta $4000
+  ;lda #$C9
+  ;sta $4002
+  ;lda #$00
+  ;sta $4003
 
   jsr LOAD_PALETTE
 LOAD_BACKGROUND:
