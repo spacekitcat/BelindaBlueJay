@@ -234,14 +234,12 @@ END_PARSE_INPUT:
 
 RATE_LIMIT:
   inc player_move_rate_limit_counter
-  lda player_move_rate_limit_counter
-  and #%01000000
-  beq MAIN
+  bne MAIN
   clv
   rts
 
 CLEAR_RATE_LIMIT:
-  lda #$00
+  lda #$D0
   sta player_move_rate_limit_counter
   rts
 

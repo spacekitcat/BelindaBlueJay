@@ -1,16 +1,17 @@
-; We have to let 29658 cycles pass so that the console can get itself ready
-WaitForVBlank:
+.proc WaitForVBlank
   bit $2002
-VBLANKWAIT1:
+VBlankWait1:
   bit $2002
-  bpl VBLANKWAIT1
-VBLANKWAIT2:
+  bpl VBlankWait1
+VBlankWait2:
   bit $2002
-  bpl VBLANKWAIT2
+  bpl VBlankWait2
   rts
+.endproc
 
-BootConsole:
+.proc BootConsole
   sei
   cld
   jsr WaitForVBlank
   rts
+.endproc
