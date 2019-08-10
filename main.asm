@@ -1,4 +1,7 @@
+.define PPU_ADDR $2006
+
 .include "boot.asm"
+.include "background.asm"
 
 .segment "HEADER"
   .byte "NES",26,2,1
@@ -24,34 +27,10 @@ palette:
 .byte $00,$00,$00,$00
 .byte $00,$00,$00,$00
 
-background_0:
-  .incbin "name-table-0.dat"
-background_1:
-  .incbin "name-table-0.dat", $F0
-background_2:
-  .incbin "name-table-1.dat"
-background_3:
-  .incbin "name-table-1.dat", $F0
-
-attribute:
-  .byte %01000000,%00010000,%00000000,%00000000,%00000000,%00000000,%00000000,%00000000 ; 0d - 7d
-  .byte %00000100,%00000001,%00000000,%00000000,%00000000,%00000000,%00000000,%00000000 ; 8d - 15d
-
-  .byte %01000000,%00010000,%00000000,%00000000,%00000000,%00000000,%00000000,%00000000
-  .byte %00000100,%00000001,%00000000,%00000000,%00000000,%00000000,%00000000,%00000000
-
-  .byte %01000000,%00010000,%00000000,%00000000,%00000000,%00000000,%00000000,%00000000
-  .byte %00000100,%00000001,%00000000,%00000000,%00000000,%00000000,%00000000,%00000000
-
-  .byte %01000000,%00010000,%00000000,%00000000,%00000000,%00000000,%00000000,%00000000
-  .byte %00000000,%00000000,%00000000,%00000000,%00000000,%00000000,%00000000,%00000000
-
 .define controller_up_bitfield #%00001000
 .define controller_down_bitfield #%00000100
 .define controller_left_bitfield #%00000010
 .define controller_right_bitfield #%00000001
-
-.define PPU_ADDR $2006
 
 .zeropage
 last_controller_state: .res 1
@@ -89,66 +68,7 @@ BOOT_STRAP:
   ;sta $4003
 
   jsr LOAD_PALETTE
-LOAD_BACKGROUND:
-  lda #$20
-  STA PPU_ADDR
-  lda #$00
-  sta PPU_ADDR
-  ldx #$00
-  :
-    lda background_0, x
-    sta $2007
-    inx
-    cpx #$FF
-    bne :-
-  lda #$20
-  STA PPU_ADDR
-  lda #$FF
-  sta PPU_ADDR
-  ldx #$00
-  :
-    lda background_1, x
-    sta $2007
-    inx
-    cpx #$FF
-    bne :-
-  lda #$21
-  STA PPU_ADDR
-  lda #$FE
-  sta PPU_ADDR
-  ldx #$00
-  :
-    lda background_2, x
-    sta $2007
-    inx
-    cpx #$FF
-    bne :-
-  lda #$22
-  STA PPU_ADDR
-  lda #$FD
-  sta PPU_ADDR
-  ldx #$00
-  :
-    lda background_3, x
-    sta $2007
-    inx
-    cpx #$FF
-    bne :-
-    
-
-LOAD_ATTRIBUTES:
-  lda $2004
-  lda #$23
-  sta PPU_ADDR
-  lda #$c0
-  sta PPU_ADDR
-  ldx #$00
-  :
-    lda attribute, x
-    sta $2007;
-    inx
-    cpx #$40
-    bne :-
+  jsr LoadBackground
 
 INIT_PPU_MIRROR_RAM:
   lda #$B0
