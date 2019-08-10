@@ -232,34 +232,31 @@ CHECK_UP:
 END_PARSE_INPUT:
   rts
 
-RATE_LIMIT:
-  inc player_move_rate_limit_counter
-  bne MAIN
-  clv
-  rts
-
 CLEAR_RATE_LIMIT:
   lda #$D0
   sta player_move_rate_limit_counter
   rts
 
-MOVE_RIGHT:
+RATE_LIMIT:
+  inc player_move_rate_limit_counter
+  bne MAIN
   jsr CLEAR_RATE_LIMIT
+  clv
+  rts
+
+MOVE_RIGHT:
   inc $0203
   rts
 
 MOVE_LEFT:
-  jsr CLEAR_RATE_LIMIT
   dec $0203
   rts
 
 MOVE_UP:
-  jsr CLEAR_RATE_LIMIT
   dec $0200
   rts 
 
 MOVE_DOWN:
-  jsr CLEAR_RATE_LIMIT
   inc $0200
   rts
   
