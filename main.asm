@@ -41,11 +41,8 @@ animation_horizontal: .res 1
 animation_rate_count: .res 1
 
 .segment "STARTUP"
-IRQ:
-RESET:
-  jsr BootConsole
 
-BOOT_STRAP:
+.proc InitGame
   lda $2002
   lda #$3F
   sta PPU_ADDR
@@ -55,22 +52,40 @@ BOOT_STRAP:
   sta player_move_rate_limit_counter
   sta animation_bishop
   sta animation_vertical
+  rts
+.endproc
 
-;SND:
-  ;lda #%00000111
-  ;sta $4015
+.proc LoadColorPalette
+  lda #%10001000
+  sta $2000
+  lda #$3F
+  sta PPU_ADDR
+  lda #$00
+  stx PPU_ADDR
+  ldx #0
+  :
+    lda palette, X
+    sta $2007
+    inx
+    cpx #32
+    bcc :-
+  rts
+.endproc
 
-  ;lda #%00111000
-  ;sta $4000
-  ;lda #$C9
-  ;sta $4002
-  ;lda #$00
-  ;sta $4003
+.proc MakeSomeNoise
+  lda #%00000111
+  sta $4015
 
-  jsr LOAD_PALETTE
-  jsr LoadBackground
+  lda #%00111000
+  sta $4000
+  lda #$C9
+  sta $4002
+  lda #$00
+  sta $4003
+  rts
+.endproc
 
-INIT_PPU_MIRROR_RAM:
+.proc InitSprites
   lda #$B0
   sta $0200 ; Y.
 
@@ -81,25 +96,45 @@ INIT_PPU_MIRROR_RAM:
   sta $0202 ; Attributes.
   lda #$80
   sta $0203 ; X.
+  rts
+.endproc
 
-INIT_PPU:
+.proc InitPictureUnit
   lda #%10010000
   sta $2000
   lda #%00011110
   sta $2001
+  rts
+.endproc
+
+.proc PollInput
+  lda #$01
+  sta $4016
+  sta last_controller_state
+  lda #$00
+  sta $4016
+  :
+    lda $4016
+    lsr a
+    rol last_controller_state
+    bcc :-
+  rts
+.endproc
+
+IRQ:
+RESET:
+  jsr BootConsole
+  jsr InitGame
+  jsr LoadColorPalette
+  jsr InitBackground
+  jsr InitSprites
+  jsr InitPictureUnit
 
 MAIN:
 REREAD:
   lda last_controller_state
   pha
-  jsr POLL_INPUT
-  pla
-  cmp last_controller_state
-  bne REREAD
-
-  lda last_controller_state
-  pha
-  jsr POLL_INPUT
+  jsr PollInput
   pla
   cmp last_controller_state
   bne REREAD
@@ -107,22 +142,6 @@ REREAD:
   jsr PARSE_INPUT
 END_MAIN:
   jmp MAIN
-
-LOAD_PALETTE:
-	lda #%10001000
-	sta $2000
-	lda #$3F
-	sta PPU_ADDR
-  lda #$00
-	stx PPU_ADDR
-	ldx #0
-	:
-		lda palette, X
-		sta $2007
-		inx
-		cpx #32
-    bcc :-
-  rts
 
 PARSE_INPUT:
   jsr SELECT_SPRITE
@@ -153,7 +172,7 @@ END_PARSE_INPUT:
   rts
 
 CLEAR_RATE_LIMIT:
-  lda #$D0
+  lda #$A0
   sta player_move_rate_limit_counter
   rts
 
@@ -180,19 +199,6 @@ MOVE_DOWN:
   inc $0200
   rts
   
-POLL_INPUT:
-  lda #$01
-  sta $4016
-  sta last_controller_state
-  lda #$00
-  sta $4016
-  :
-    lda $4016
-    lsr a
-    rol last_controller_state
-    bcc :-
-  rts
-
 NMI:
 PPU_WRITE:
   ; Ask the DMA at $4014 to copy $0200-$02FF in RAM into the OAM table $02
