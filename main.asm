@@ -288,10 +288,9 @@ LATCH_CONTROLLER:
   sta $4016
   lda #$00
   sta $4016
-  lda animation_rate_count
-  and #%11111111
-  bne SPRITE_ROTATE
-  lda #$00
+  inc animation_rate_count
+  bne END_NMI
+  lda #$F6
   sta animation_rate_count
 SPRITE_ROTATE:
   lda animation_bishop
@@ -305,7 +304,6 @@ SPRITE_ROTATE:
   sta animation_horizontal
   jmp END_NMI
 SPRITE_ROTATE_RST:
-  inc animation_rate_count
   lda #$00
   sta animation_bishop
   lda #$01
