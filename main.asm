@@ -140,22 +140,22 @@ CHECK_RIGHT:
   lda last_controller_state
   and controller_right_bitfield
   beq CHECK_LEFT
-  jsr MOVE_RIGHT
+  jsr PlayerMoveEast
 CHECK_LEFT:
   lda last_controller_state
   and controller_left_bitfield
   beq CHECK_DOWN
-  jsr MOVE_LEFT
+  jsr PlayerMoveWest
 CHECK_DOWN:
   lda last_controller_state
   and controller_down_bitfield
   beq CHECK_UP
-  jsr MOVE_DOWN
+  jsr PlayerMoveSouth
 CHECK_UP:
   lda last_controller_state
   and controller_up_bitfield
   beq END_PARSE_INPUT
-  jsr MOVE_UP
+  jsr PlayerMoveNorth
 
 END_PARSE_INPUT:
   rts
@@ -168,6 +168,26 @@ END_PARSE_INPUT:
   jsr InitBackground
   jsr InitSprites
   jsr InitPictureUnit
+  rts
+.endproc
+
+.proc PlayerMoveNorth
+  dec $0200
+  rts
+.endproc
+
+.proc PlayerMoveEast
+  inc $0203
+  rts
+.endproc
+
+.proc PlayerMoveSouth
+  inc $0200
+  rts
+.endproc
+
+.proc PlayerMoveWest
+  dec $0203
   rts
 .endproc
 
@@ -190,22 +210,6 @@ RATE_LIMIT:
   bne MAIN
   jsr CLEAR_RATE_LIMIT
   clv
-  rts
-
-MOVE_RIGHT:
-  inc $0203
-  rts
-
-MOVE_LEFT:
-  dec $0203
-  rts
-
-MOVE_UP:
-  dec $0200
-  rts 
-
-MOVE_DOWN:
-  inc $0200
   rts
   
 NMI:
