@@ -122,20 +122,18 @@ animation_rate_count: .res 1
 .endproc
 
 .proc PollInputWithVerification
-REREAD:
   lda last_controller_state
   pha
   jsr PollInput
   pla
   cmp last_controller_state
-  bne REREAD
+  bne PollInputWithVerification
   rts
 .endproc
 
 .proc ProcessInput
   jsr SELECT_SPRITE
-
-  jsr RATE_LIMIT
+  jsr UpdateRateLimit
 CHECK_RIGHT:
   lda last_controller_state
   and controller_right_bitfield
@@ -191,28 +189,27 @@ END_PARSE_INPUT:
   rts
 .endproc
 
-IRQ:
-RESET:
-  jsr HandleResetInterrupt
-MAIN:
-  jsr PollInputWithVerification
-  jsr ProcessInput
-END_MAIN:
-  jmp MAIN
-
-CLEAR_RATE_LIMIT:
+.proc ResetRateLimit
   lda #$A0
   sta player_move_rate_limit_counter
   rts
+.endproc
 
-RATE_LIMIT:
+.proc UpdateRateLimit
   inc player_move_rate_limit_counter
   bne MAIN
-  jsr CLEAR_RATE_LIMIT
+  jsr ResetRateLimit
   clv
   rts
-  
-NMI:
+.endproc
+
+.proc Main
+  jsr PollInputWithVerification
+  jsr ProcessInput
+  rts
+.endproc
+
+.proc HandleVBlankNMI
 PPU_WRITE:
   ; Ask the DMA at $4014 to copy $0200-$02FF in RAM into the OAM table $02
   lda #$00
@@ -251,6 +248,19 @@ END_NMI:
   lda #$00
   sta $2005
   sta $2005
+  rts
+.endproc
+
+IRQ:
+RESET:
+  jsr HandleResetInterrupt
+
+MAIN:
+  jsr Main
+  jmp MAIN
+
+NMI:
+  jsr HandleVBlankNMI
   rti
 
 ; Depends on last_controller_state having the controller status bitfield.
