@@ -132,26 +132,7 @@ REREAD:
   rts
 .endproc
 
-.proc HandleResetInterrupt
-  jsr BootConsole
-  jsr InitGame
-  jsr LoadColorPalette
-  jsr InitBackground
-  jsr InitSprites
-  jsr InitPictureUnit
-  rts
-.endproc
-
-IRQ:
-RESET:
-  jsr HandleResetInterrupt
-MAIN:
-  jsr PollInputWithVerification
-  jsr PARSE_INPUT
-END_MAIN:
-  jmp MAIN
-
-PARSE_INPUT:
+.proc ProcessInput
   jsr SELECT_SPRITE
 
   jsr RATE_LIMIT
@@ -178,6 +159,26 @@ CHECK_UP:
 
 END_PARSE_INPUT:
   rts
+.endproc
+
+.proc HandleResetInterrupt
+  jsr BootConsole
+  jsr InitGame
+  jsr LoadColorPalette
+  jsr InitBackground
+  jsr InitSprites
+  jsr InitPictureUnit
+  rts
+.endproc
+
+IRQ:
+RESET:
+  jsr HandleResetInterrupt
+MAIN:
+  jsr PollInputWithVerification
+  jsr ProcessInput
+END_MAIN:
+  jmp MAIN
 
 CLEAR_RATE_LIMIT:
   lda #$A0
