@@ -121,16 +121,7 @@ animation_rate_count: .res 1
   rts
 .endproc
 
-IRQ:
-RESET:
-  jsr BootConsole
-  jsr InitGame
-  jsr LoadColorPalette
-  jsr InitBackground
-  jsr InitSprites
-  jsr InitPictureUnit
-
-MAIN:
+.proc PollInputWithVerification
 REREAD:
   lda last_controller_state
   pha
@@ -138,7 +129,24 @@ REREAD:
   pla
   cmp last_controller_state
   bne REREAD
+  rts
+.endproc
 
+.proc HandleResetInterrupt
+  jsr BootConsole
+  jsr InitGame
+  jsr LoadColorPalette
+  jsr InitBackground
+  jsr InitSprites
+  jsr InitPictureUnit
+  rts
+.endproc
+
+IRQ:
+RESET:
+  jsr HandleResetInterrupt
+MAIN:
+  jsr PollInputWithVerification
   jsr PARSE_INPUT
 END_MAIN:
   jmp MAIN
