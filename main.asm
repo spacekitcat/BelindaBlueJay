@@ -2,6 +2,7 @@
 
 .include "boot.asm"
 .include "background.asm"
+.include "player.asm"
 
 .segment "HEADER"
   .byte "NES",26,2,1
@@ -263,24 +264,6 @@ NMI:
   jsr HandleVBlankNMI
   rti
 
-.proc RenderDiagonalPlayerSprite
-  lda animation_bishop
-  sta $0201
-  rts
-.endproc
-
-.proc RenderVerticalPlayerSprite
-  lda animation_vertical
-  sta $0201
-  rts
-.endproc
-
-.proc RenderHorizontalPlayerSprite
-  lda animation_horizontal
-  sta $0201
-  rts
-.endproc
-
 ; Depends on last_controller_state having the controller status bitfield.
 .proc PlayerSpriteSelector
   lda last_controller_state
@@ -288,60 +271,43 @@ NMI:
 NORTH_EAST:
   cmp #%00001001
   bne NORTH_WEST
-  jsr RenderDiagonalPlayerSprite
-  lda #%00000000
-  sta $0202
+  jsr SetPlayerDirectionNorthEast
   jmp END_SELECT_SPRITE
 NORTH_WEST:
   cmp #%00001010
   bne SOUTH_EAST
-  jsr RenderDiagonalPlayerSprite
-  lda #%01000000
-  sta $0202
+  jsr SetPlayerDirectionNorthWest
   jmp END_SELECT_SPRITE
 SOUTH_EAST:
   cmp #%00000101
   bne SOUTH_WEST
-  jsr RenderDiagonalPlayerSprite
-  lda #%10000000
-  sta $0202
+  jsr SetPlayerDirectionSouthEast
   jmp END_SELECT_SPRITE
 SOUTH_WEST:
   cmp #%00000110
   bne NORTH
-  jsr RenderDiagonalPlayerSprite
-  lda #%11000000
-  sta $0202
+  jsr SetPlayerDirectionSouthWest
   jmp END_SELECT_SPRITE
 NORTH:
   cmp #%00001000
   bne EAST
-  jsr RenderVerticalPlayerSprite
-  lda #%00000000
-  sta $0202
+  jsr SetPlayerDirectionNorth
   jmp END_SELECT_SPRITE
 EAST:
   cmp #%00000001
   bne SOUTH
-  jsr RenderHorizontalPlayerSprite
-  lda #%00000000
-  sta $0202
+  jsr SetPlayerDirectionEast
   jmp END_SELECT_SPRITE
 SOUTH:
   cmp #%00000100
   bne WEST
-  jsr RenderVerticalPlayerSprite
-  lda #%10000000
-  sta $0202
+  jsr SetPlayerDirectionSouth
   jmp END_SELECT_SPRITE
 WEST:
   cmp #%00000010
   bne END_SELECT_SPRITE
-  jsr RenderHorizontalPlayerSprite
-  lda #%01000000
-  sta $0202
+  jsr SetPlayerDirectionWest
   jmp END_SELECT_SPRITE
-
 END_SELECT_SPRITE:
   rts
 .endproc
