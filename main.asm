@@ -132,7 +132,7 @@ animation_rate_count: .res 1
 .endproc
 
 .proc ProcessInput
-  jsr SELECT_SPRITE
+  jsr PlayerSpriteSelector
   jsr UpdateRateLimit
 CHECK_RIGHT:
   lda last_controller_state
@@ -263,75 +263,85 @@ NMI:
   jsr HandleVBlankNMI
   rti
 
+.proc RenderDiagonalPlayerSprite
+  lda animation_bishop
+  sta $0201
+  rts
+.endproc
+
+.proc RenderVerticalPlayerSprite
+  lda animation_vertical
+  sta $0201
+  rts
+.endproc
+
+.proc RenderHorizontalPlayerSprite
+  lda animation_horizontal
+  sta $0201
+  rts
+.endproc
+
 ; Depends on last_controller_state having the controller status bitfield.
-SELECT_SPRITE:
+.proc PlayerSpriteSelector
   lda last_controller_state
   and #%00001111
 NORTH_EAST:
   cmp #%00001001
   bne NORTH_WEST
-  lda animation_bishop
-  sta $0201
+  jsr RenderDiagonalPlayerSprite
   lda #%00000000
   sta $0202
   jmp END_SELECT_SPRITE
 NORTH_WEST:
   cmp #%00001010
   bne SOUTH_EAST
-  lda animation_bishop
-  sta $0201
+  jsr RenderDiagonalPlayerSprite
   lda #%01000000
   sta $0202
   jmp END_SELECT_SPRITE
 SOUTH_EAST:
   cmp #%00000101
   bne SOUTH_WEST
-  lda animation_bishop
-  sta $0201
+  jsr RenderDiagonalPlayerSprite
   lda #%10000000
   sta $0202
   jmp END_SELECT_SPRITE
 SOUTH_WEST:
   cmp #%00000110
   bne NORTH
-  lda animation_bishop
-  sta $0201
+  jsr RenderDiagonalPlayerSprite
   lda #%11000000
   sta $0202
   jmp END_SELECT_SPRITE
 NORTH:
   cmp #%00001000
   bne EAST
-  lda animation_vertical
-  sta $0201
+  jsr RenderVerticalPlayerSprite
   lda #%00000000
   sta $0202
   jmp END_SELECT_SPRITE
 EAST:
   cmp #%00000001
   bne SOUTH
-  ldx #$01
-  lda animation_horizontal
-  sta $0201
+  jsr RenderHorizontalPlayerSprite
   lda #%00000000
   sta $0202
   jmp END_SELECT_SPRITE
 SOUTH:
   cmp #%00000100
   bne WEST
-  lda animation_vertical
-  sta $0201
+  jsr RenderVerticalPlayerSprite
   lda #%10000000
   sta $0202
   jmp END_SELECT_SPRITE
 WEST:
   cmp #%00000010
   bne END_SELECT_SPRITE
-  lda animation_horizontal
-  sta $0201
+  jsr RenderHorizontalPlayerSprite
   lda #%01000000
   sta $0202
   jmp END_SELECT_SPRITE
 
 END_SELECT_SPRITE:
   rts
+.endproc
