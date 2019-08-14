@@ -11,15 +11,15 @@ palette:
 
 .proc LoadColorPalette
   lda #%10001000
-  sta $2000
+  sta register_ppu_ctrl
   lda #$3F
-  sta PPU_ADDR
+  sta register_ppu_addr
   lda #$00
-  stx PPU_ADDR
+  stx register_ppu_addr
   ldx #0
   :
     lda palette, X
-    sta $2007
+    sta register_ppu_data
     inx
     cpx #32
     bcc :-

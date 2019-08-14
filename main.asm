@@ -1,4 +1,19 @@
-.define PPU_ADDR $2006
+; Hardware registers
+.define register_ppu_ctrl           $2000
+.define register_ppu_mask           $2001
+.define register_ppu_status         $2002
+.define register_ppu_oam_addr       $2003
+.define register_ppu_oam_data       $2004
+.define register_ppu_scroll         $2005
+.define register_ppu_addr           $2006
+.define register_ppu_data           $2007
+.define register_apu_pulse1_byte1   $4000
+.define register_apu_pulse1_byte3   $4002
+.define register_apu_pulse1_byte4   $4003
+.define register_ppu_oam_dma        $4014
+.define register_apu_status         $4015
+
+.define register_joy_one            $4016
 
 .include "boot.asm"
 .include "palette.asm"
@@ -17,32 +32,28 @@
   .word RESET
   .word IRQ
 
-.define controller_up_bitfield #%00001000
-.define controller_down_bitfield #%00000100
-.define controller_left_bitfield #%00000010
-.define controller_right_bitfield #%00000001
-
-; Hardware mapped memory addresses
-.define joypad_one_addr $4016
-.define ppu_oam_dma $4014
+.define controller_up_bitfield      #%00001000
+.define controller_down_bitfield    #%00000100
+.define controller_left_bitfield    #%00000010
+.define controller_right_bitfield   #%00000001
 
 .zeropage
-last_controller_state:            .res 1
-player_move_rate_limit_counter:   .res 1
-animation_bishop:                 .res 1
-animation_vertical:               .res 1
-animation_horizontal:             .res 1
-animation_rate_count:             .res 1
+last_controller_state:              .res 1
+player_move_rate_limit_counter:     .res 1
+animation_bishop:                   .res 1
+animation_vertical:                 .res 1
+animation_horizontal:               .res 1
+animation_rate_count:               .res 1
 
 .segment "STARTUP"
 
 .proc InitGame
-  lda $2002
+  lda register_ppu_status
   lda #$3F
-  sta PPU_ADDR
+  sta register_ppu_addr
   lda $00
-  sta PPU_ADDR
-  lda #$00
+    sta register_ppu_addr
+  lda #$00  
   sta player_move_rate_limit_counter
   sta animation_bishop
   sta animation_vertical
@@ -51,14 +62,14 @@ animation_rate_count:             .res 1
 
 .proc MakeSomeNoise
   lda #%00000111
-  sta $4015
+  sta register_apu_status
 
   lda #%00111000
-  sta $4000
+  sta register_apu_pulse1_byte1
   lda #$C9
-  sta $4002
+  sta register_apu_pulse1_byte3
   lda #$00
-  sta $4003
+  sta register_apu_pulse1_byte4
   rts
 .endproc
 
@@ -89,20 +100,20 @@ animation_rate_count:             .res 1
 
 .proc InitPictureUnit
   lda #%10010000
-  sta $2000
+  sta register_ppu_ctrl
   lda #%00011110
-  sta $2001
+  sta register_ppu_mask
   rts
 .endproc
 
 .proc PollInput
   lda #$01
-  sta joypad_one_addr
+  sta register_joy_one
   sta last_controller_state
   lda #$00
-  sta joypad_one_addr
+  sta register_joy_one
   :
-    lda joypad_one_addr
+    lda register_joy_one
     lsr a
     rol last_controller_state
     bcc :-
@@ -178,7 +189,6 @@ END_PARSE_INPUT:
 .endproc
 
 .proc AnimateSprites
-
   lda animation_bishop
   cmp #$00
   bne SPRITE_FIRST
@@ -212,17 +222,17 @@ END:
 .proc CopyGraphicsBufferToPPU
   ; Ask the DMA at ppu_oam_dma to copy $0200-$02FF in RAM into the OAM table $02
   lda #$00
-  sta $2003
+  sta register_ppu_oam_addr
   lda #$02
-  sta ppu_oam_dma
+  sta register_ppu_oam_dma
   rts
 .endproc
 
 .proc HandleVBlankNMI
   jsr CopyGraphicsBufferToPPU
   lda #$00
-  sta $2005
-  sta $2005
+  sta register_ppu_scroll
+  sta register_ppu_scroll
   rts
 .endproc
 

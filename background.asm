@@ -22,59 +22,59 @@ attribute:
 
 .proc InitBackground
   lda #$20
-  STA PPU_ADDR
+  STA register_ppu_addr
   lda #$00
-  sta PPU_ADDR
+  sta register_ppu_addr
   ldx #$00
   :
     lda background_0, x
-    sta $2007
+    sta register_ppu_data
     inx
     cpx #$FF
     bne :-
   lda #$20
-  STA PPU_ADDR
+  STA register_ppu_addr
   lda #$FF
-  sta PPU_ADDR
+  sta register_ppu_addr
   ldx #$00
   :
     lda background_1, x
-    sta $2007
+    sta register_ppu_data
     inx
     cpx #$FF
     bne :-
   lda #$21
-  STA PPU_ADDR
+  STA register_ppu_addr
   lda #$FE
-  sta PPU_ADDR
+  sta register_ppu_addr
   ldx #$00
   :
     lda background_2, x
-    sta $2007
+    sta register_ppu_data
     inx
     cpx #$FF
     bne :-
   lda #$22
-  STA PPU_ADDR
+  STA register_ppu_addr
   lda #$FD
-  sta PPU_ADDR
+  sta register_ppu_addr
   ldx #$00
   :
     lda background_3, x
-    sta $2007
+    sta register_ppu_data
     inx
     cpx #$FF
     bne :-
 LOAD_ATTRIBUTES:
-  lda $2004
+  lda register_ppu_oam_data
   lda #$23
-  sta PPU_ADDR
+  sta register_ppu_addr
   lda #$c0
-  sta PPU_ADDR
+  sta register_ppu_addr
   ldx #$00
   :
     lda attribute, x
-    sta $2007;
+    sta register_ppu_data;
     inx
     cpx #$40
     bne :-

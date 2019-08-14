@@ -1,10 +1,10 @@
 .proc WaitForVBlank
-  bit $2002
+  bit register_ppu_status
 VBlankWait1:
-  bit $2002
+  bit register_ppu_status
   bpl VBlankWait1
 VBlankWait2:
-  bit $2002
+  bit register_ppu_status
   bpl VBlankWait2
   rts
 .endproc
