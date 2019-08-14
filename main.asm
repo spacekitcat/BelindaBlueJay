@@ -1,8 +1,10 @@
 .define PPU_ADDR $2006
 
 .include "boot.asm"
+.include "palette.asm"
 .include "background.asm"
 .include "player.asm"
+.include "npc.asm"
 
 .segment "HEADER"
   .byte "NES",26,2,1
@@ -15,31 +17,22 @@
   .word RESET
   .word IRQ
 
-.segment "RODATA"
-
-palette:
-.byte $3C,$11,$21,$31
-.byte $3C,$12,$22,$32
-.byte $3C,$11,$21,$31
-.byte $3C,$11,$21,$31
-
-.byte $3C,$30,$29,$19
-.byte $44,$00,$00,$00
-.byte $00,$00,$00,$00
-.byte $00,$00,$00,$00
-
 .define controller_up_bitfield #%00001000
 .define controller_down_bitfield #%00000100
 .define controller_left_bitfield #%00000010
 .define controller_right_bitfield #%00000001
 
+; Hardware mapped memory addresses
+.define joypad_one_addr $4016
+.define ppu_oam_dma $4014
+
 .zeropage
-last_controller_state: .res 1
-player_move_rate_limit_counter: .res 1
-animation_bishop: .res 1
-animation_vertical: .res 1
-animation_horizontal: .res 1
-animation_rate_count: .res 1
+last_controller_state:            .res 1
+player_move_rate_limit_counter:   .res 1
+animation_bishop:                 .res 1
+animation_vertical:               .res 1
+animation_horizontal:             .res 1
+animation_rate_count:             .res 1
 
 .segment "STARTUP"
 
@@ -53,23 +46,6 @@ animation_rate_count: .res 1
   sta player_move_rate_limit_counter
   sta animation_bishop
   sta animation_vertical
-  rts
-.endproc
-
-.proc LoadColorPalette
-  lda #%10001000
-  sta $2000
-  lda #$3F
-  sta PPU_ADDR
-  lda #$00
-  stx PPU_ADDR
-  ldx #0
-  :
-    lda palette, X
-    sta $2007
-    inx
-    cpx #32
-    bcc :-
   rts
 .endproc
 
@@ -97,6 +73,17 @@ animation_rate_count: .res 1
   sta $0202 ; Attributes.
   lda #$80
   sta $0203 ; X.
+
+  lda #$B0
+  sta $0204 ; Y.
+
+  lda #$00
+  sta $0205 ; Tile number.
+  
+  lda #%00010001
+  sta $0206 ; Attributes.
+  lda #$80
+  sta $0207 ; X.
   rts
 .endproc
 
@@ -110,12 +97,12 @@ animation_rate_count: .res 1
 
 .proc PollInput
   lda #$01
-  sta $4016
+  sta joypad_one_addr
   sta last_controller_state
   lda #$00
-  sta $4016
+  sta joypad_one_addr
   :
-    lda $4016
+    lda joypad_one_addr
     lsr a
     rol last_controller_state
     bcc :-
@@ -133,7 +120,13 @@ animation_rate_count: .res 1
 .endproc
 
 .proc ProcessInput
-  jsr PlayerSpriteSelector
+  ; Pass `last_controller_state` into `RenderPlayerDirectionSprite` via the stack
+  lda last_controller_state
+  pha
+  jsr RenderPlayerDirectionSprite
+  jsr RenderNPCDirectionSprite
+  pla
+  
   jsr UpdateRateLimit
 CHECK_RIGHT:
   lda last_controller_state
@@ -170,26 +163,6 @@ END_PARSE_INPUT:
   rts
 .endproc
 
-.proc PlayerMoveNorth
-  dec $0200
-  rts
-.endproc
-
-.proc PlayerMoveEast
-  inc $0203
-  rts
-.endproc
-
-.proc PlayerMoveSouth
-  inc $0200
-  rts
-.endproc
-
-.proc PlayerMoveWest
-  dec $0203
-  rts
-.endproc
-
 .proc ResetRateLimit
   lda #$A0
   sta player_move_rate_limit_counter
@@ -204,48 +177,49 @@ END_PARSE_INPUT:
   rts
 .endproc
 
-.proc Main
-  jsr PollInputWithVerification
-  jsr ProcessInput
-  rts
-.endproc
+.proc AnimateSprites
 
-.proc HandleVBlankNMI
-PPU_WRITE:
-  ; Ask the DMA at $4014 to copy $0200-$02FF in RAM into the OAM table $02
-  lda #$00
-  sta $2003
-  lda #$02
-  sta $4014
-LATCH_CONTROLLER:
-  ; Phantom input and other glitches will occur if you don't do this.
-  lda #$01
-  sta $4016
-  lda #$00
-  sta $4016
-  inc animation_rate_count
-  bne END_NMI
-  lda #$F6
-  sta animation_rate_count
-SPRITE_ROTATE:
   lda animation_bishop
   cmp #$00
-  bne SPRITE_ROTATE_RST
+  bne SPRITE_FIRST
+SPRITE_NEXT:
   lda #$03
   sta animation_bishop
   lda #$04
   sta animation_vertical
   lda #$05
   sta animation_horizontal
-  jmp END_NMI
-SPRITE_ROTATE_RST:
+  jmp END
+SPRITE_FIRST:
   lda #$00
   sta animation_bishop
   lda #$01
   sta animation_vertical
   lda #$02
   sta animation_horizontal
-END_NMI:
+END:
+  rts
+.endproc
+
+.proc Main
+  jsr PollInputWithVerification
+  jsr ProcessInput
+  jsr NPCMove
+  jsr AnimateSprites
+  rts
+.endproc
+
+.proc CopyGraphicsBufferToPPU
+  ; Ask the DMA at ppu_oam_dma to copy $0200-$02FF in RAM into the OAM table $02
+  lda #$00
+  sta $2003
+  lda #$02
+  sta ppu_oam_dma
+  rts
+.endproc
+
+.proc HandleVBlankNMI
+  jsr CopyGraphicsBufferToPPU
   lda #$00
   sta $2005
   sta $2005
@@ -263,51 +237,3 @@ MAIN:
 NMI:
   jsr HandleVBlankNMI
   rti
-
-; Depends on last_controller_state having the controller status bitfield.
-.proc PlayerSpriteSelector
-  lda last_controller_state
-  and #%00001111
-NORTH_EAST:
-  cmp #%00001001
-  bne NORTH_WEST
-  jsr SetPlayerDirectionNorthEast
-  jmp END_SELECT_SPRITE
-NORTH_WEST:
-  cmp #%00001010
-  bne SOUTH_EAST
-  jsr SetPlayerDirectionNorthWest
-  jmp END_SELECT_SPRITE
-SOUTH_EAST:
-  cmp #%00000101
-  bne SOUTH_WEST
-  jsr SetPlayerDirectionSouthEast
-  jmp END_SELECT_SPRITE
-SOUTH_WEST:
-  cmp #%00000110
-  bne NORTH
-  jsr SetPlayerDirectionSouthWest
-  jmp END_SELECT_SPRITE
-NORTH:
-  cmp #%00001000
-  bne EAST
-  jsr SetPlayerDirectionNorth
-  jmp END_SELECT_SPRITE
-EAST:
-  cmp #%00000001
-  bne SOUTH
-  jsr SetPlayerDirectionEast
-  jmp END_SELECT_SPRITE
-SOUTH:
-  cmp #%00000100
-  bne WEST
-  jsr SetPlayerDirectionSouth
-  jmp END_SELECT_SPRITE
-WEST:
-  cmp #%00000010
-  bne END_SELECT_SPRITE
-  jsr SetPlayerDirectionWest
-  jmp END_SELECT_SPRITE
-END_SELECT_SPRITE:
-  rts
-.endproc
