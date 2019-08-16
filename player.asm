@@ -1,72 +1,67 @@
-.proc RenderDiagonalPlayerSprite
-  lda animation_bishop
-  sta $0201
-  rts
-.endproc
-
-.proc RenderVerticalPlayerSprite
-  lda animation_vertical
-  sta $0201
-  rts
-.endproc
-
-.proc RenderHorizontalPlayerSprite
-  lda animation_horizontal
-  sta $0201
-  rts
+.proc PlayerInit
+  lda #$00
+  sta player_move_rate_limit_counter
 .endproc
 
 .proc RenderPlayerDirectionNorth
-  jsr RenderVerticalPlayerSprite
+  lda animation_vertical
+  sta $0201
   lda #%00000000
   sta $0202
   rts
 .endproc
 
 .proc RenderPlayerDirectionNorthEast
-  jsr RenderDiagonalPlayerSprite
+  lda animation_bishop
+  sta $0201
   lda #%00000000
   sta $0202
   rts
 .endproc
 
 .proc RenderPlayerDirectionEast
-  jsr RenderHorizontalPlayerSprite
+  lda animation_horizontal
+  sta $0201
   lda #%00000000
   sta $0202
   rts
 .endproc
 
 .proc RenderPlayerDirectionSouthEast
-  jsr RenderDiagonalPlayerSprite
+  lda animation_bishop
+  sta $0201
   lda #%10000000
   sta $0202
   rts
 .endproc
 
 .proc RenderPlayerDirectionSouth
-  jsr RenderVerticalPlayerSprite
+  lda animation_vertical
+  sta $0201
   lda #%10000000
   sta $0202
   rts
 .endproc
 
 .proc RenderPlayerDirectionSouthWest
-  jsr RenderDiagonalPlayerSprite
+  lda animation_bishop
+  sta $0201
   lda #%11000000
   sta $0202
   rts
 .endproc
 
 .proc RenderPlayerDirectionWest
-  jsr RenderHorizontalPlayerSprite
+  lda animation_horizontal
+  sta $0201
   lda #%01000000
   sta $0202
   rts
 .endproc
 
 .proc RenderPlayerDirectionNorthWest
-  jsr RenderDiagonalPlayerSprite
+  lda animation_bishop
+  sta $0201
   lda #%01000000
   sta $0202
   rts

@@ -44,19 +44,18 @@ animation_bishop:                   .res 1
 animation_vertical:                 .res 1
 animation_horizontal:               .res 1
 animation_rate_count:               .res 1
+way_point_ptr:                      .res 1
 
 .segment "STARTUP"
 
 .proc InitGame
-  lda register_ppu_status
-  lda #$3F
-  sta register_ppu_addr
-  lda $00
-    sta register_ppu_addr
   lda #$00  
-  sta player_move_rate_limit_counter
   sta animation_bishop
   sta animation_vertical
+
+  jsr PlayerInit
+  jsr NPCInit
+  
   rts
 .endproc
 
@@ -175,7 +174,7 @@ END_PARSE_INPUT:
 .endproc
 
 .proc ResetRateLimit
-  lda #$A0
+  lda #$23
   sta player_move_rate_limit_counter
   rts
 .endproc
