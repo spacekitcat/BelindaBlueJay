@@ -45,6 +45,9 @@ animation_vertical:                 .res 1
 animation_horizontal:               .res 1
 animation_rate_count:               .res 1
 way_point_ptr:                      .res 1
+param_1:                            .res 1
+param_2:                            .res 1
+param_3:                            .res 1
 
 .segment "STARTUP"
 
@@ -52,6 +55,9 @@ way_point_ptr:                      .res 1
   lda #$00  
   sta animation_bishop
   sta animation_vertical
+  sta param_1
+  sta param_2
+  sta param_3
 
   jsr PlayerInit
   jsr NPCInit
@@ -130,12 +136,9 @@ way_point_ptr:                      .res 1
 .endproc
 
 .proc ProcessInput
-  ; Pass `last_controller_state` into `RenderPlayerDirectionSprite` via the stack
-  lda last_controller_state
-  pha
+  ldx last_controller_state       ; Sub routine parameter
   jsr RenderPlayerDirectionSprite
   jsr RenderNPCDirectionSprite
-  pla
   
   jsr UpdateRateLimit
 CHECK_RIGHT:

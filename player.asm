@@ -3,78 +3,90 @@
   sta player_move_rate_limit_counter
 .endproc
 
+.proc RenderPlayerDirection
+  lda param_1
+  sta $0201
+  lda param_2
+  sta $0202
+  rts
+.endproc
+
 .proc RenderPlayerDirectionNorth
   lda animation_vertical
-  sta $0201
+  sta param_1
   lda #%00000000
-  sta $0202
+  sta param_2
+  jsr RenderPlayerDirection
   rts
 .endproc
 
 .proc RenderPlayerDirectionNorthEast
   lda animation_bishop
-  sta $0201
+  sta param_1
   lda #%00000000
-  sta $0202
+  sta param_2
+  jsr RenderPlayerDirection
   rts
 .endproc
 
 .proc RenderPlayerDirectionEast
   lda animation_horizontal
-  sta $0201
+  sta param_1
   lda #%00000000
-  sta $0202
+  sta param_2
+  jsr RenderPlayerDirection
   rts
 .endproc
 
 .proc RenderPlayerDirectionSouthEast
   lda animation_bishop
-  sta $0201
+  sta param_1
   lda #%10000000
-  sta $0202
+  sta param_2
+  jsr RenderPlayerDirection
   rts
 .endproc
 
 .proc RenderPlayerDirectionSouth
   lda animation_vertical
-  sta $0201
+  sta param_1
   lda #%10000000
-  sta $0202
+  sta param_2
+  jsr RenderPlayerDirection
   rts
 .endproc
 
 .proc RenderPlayerDirectionSouthWest
   lda animation_bishop
-  sta $0201
+  sta param_1
   lda #%11000000
-  sta $0202
+  sta param_2
+  jsr RenderPlayerDirection
   rts
 .endproc
 
 .proc RenderPlayerDirectionWest
   lda animation_horizontal
-  sta $0201
+  sta param_1
   lda #%01000000
-  sta $0202
+  sta param_2
+  jsr RenderPlayerDirection
   rts
 .endproc
 
 .proc RenderPlayerDirectionNorthWest
   lda animation_bishop
-  sta $0201
+  sta param_1
   lda #%01000000
-  sta $0202
+  sta param_2
+  jsr RenderPlayerDirection
   rts
 .endproc
 
-; Arguments: (1) The controller state bitfield where the last 4 bits
+; Arguments: (index: 0, register: X) The controller state bitfield where the last 4 bits
 ;     represent North, South, West and East respectively.
 .proc RenderPlayerDirectionSprite
-  tsx
-  inx
-  inx
-  inx
-  lda $0100,X
+  txa
   and #%00001111
 NORTH_EAST:
   cmp #%00001001
@@ -117,7 +129,6 @@ WEST:
   jsr RenderPlayerDirectionWest
   jmp END_SELECT_SPRITE
 END_SELECT_SPRITE:
-  sta $0100, X
   rts
 .endproc
 
