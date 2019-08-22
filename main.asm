@@ -18,6 +18,7 @@
 .include "boot.asm"
 .include "palette.asm"
 .include "background.asm"
+.include "bird-sprite.asm"
 .include "player.asm"
 .include "npc.asm"
 
@@ -39,7 +40,8 @@
 
 .zeropage
 last_controller_state:              .res 1
-player_move_rate_limit_counter:     .res 1
+player_move_rate_limit_counter_lsb: .res 1
+player_move_rate_limit_counter_msb: .res 1
 animation_bishop:                   .res 1
 animation_vertical:                 .res 1
 animation_horizontal:               .res 1
@@ -135,12 +137,35 @@ param_3:                            .res 1
   rts
 .endproc
 
+.proc RateLimit
+  lda #$EE
+  sta player_move_rate_limit_counter_msb
+LOOP_MSB:
+  lda #$00
+  sta player_move_rate_limit_counter_lsb
+LOOP_LSB:
+  inc player_move_rate_limit_counter_lsb
+  lda player_move_rate_limit_counter_lsb
+  bne LOOP_LSB
+  inc player_move_rate_limit_counter_msb
+  lda player_move_rate_limit_counter_msb
+  bne LOOP_MSB
+  rts
+.endproc
+
 .proc ProcessInput
-  ldx last_controller_state       ; Sub routine parameter
-  jsr RenderPlayerDirectionSprite
+  jsr RateLimit
+
+  lda last_controller_state
+  sta param_1
+  lda #$00
+  sta param_2
+  lda #%00000000
+  sta param_3
+  jsr RenderBirdSprite
   jsr RenderNPCDirectionSprite
-  
-  jsr UpdateRateLimit
+
+  beq END_PARSE_INPUT
 CHECK_RIGHT:
   lda last_controller_state
   and controller_right_bitfield
@@ -173,20 +198,6 @@ END_PARSE_INPUT:
   jsr InitBackground
   jsr InitSprites
   jsr InitPictureUnit
-  rts
-.endproc
-
-.proc ResetRateLimit
-  lda #$23
-  sta player_move_rate_limit_counter
-  rts
-.endproc
-
-.proc UpdateRateLimit
-  inc player_move_rate_limit_counter
-  bne MAIN
-  jsr ResetRateLimit
-  clv
   rts
 .endproc
 
