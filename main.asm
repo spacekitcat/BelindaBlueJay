@@ -22,6 +22,17 @@
 .include "player.asm"
 .include "npc.asm"
 
+music:
+  .byte $a9, $00, $00, $00, $00, $00, $00, $00
+  .byte $c9, $00, $00, $00, $00, $00, $00, $00
+  .byte $a9, $00, $00, $00, $00, $00, $00, $00
+  .byte $99, $00, $00, $00, $00, $00, $00, $00
+  .byte $00, $00, $00, $00, $00, $00, $00, $00
+  .byte $00, $00, $00, $00, $00, $00, $00, $00
+
+music_len:
+  .byte $2F
+
 .segment "HEADER"
   .byte "NES",26,2,1
 
@@ -38,6 +49,7 @@
 .define controller_left_bitfield    #%00000010
 .define controller_right_bitfield   #%00000001
 
+
 .zeropage
 last_controller_state:              .res 1
 player_move_rate_limit_counter_lsb: .res 1
@@ -50,6 +62,7 @@ way_point_ptr:                      .res 1
 param_1:                            .res 1
 param_2:                            .res 1
 param_3:                            .res 1
+music_tracker_bit:                  .res 1
 
 .segment "STARTUP"
 
@@ -60,23 +73,33 @@ param_3:                            .res 1
   sta param_1
   sta param_2
   sta param_3
+  lda music_len
+  sta music_tracker_bit
 
   jsr PlayerInit
   jsr NPCInit
+
+  lda #%00000010
+  sta $4015
   
   rts
 .endproc
 
 .proc MakeSomeNoise
-  lda #%00000111
-  sta register_apu_status
-
   lda #%00111000
-  sta register_apu_pulse1_byte1
-  lda #$C9
-  sta register_apu_pulse1_byte3
+  sta $4004
+  ldx music_tracker_bit
+  lda music, X
+  sta $4006
+  lda music_tracker_bit
+  dec music_tracker_bit
+  bne NEXT
+RESET:
+  lda music_len
+  sta music_tracker_bit
+NEXT:
   lda #$00
-  sta register_apu_pulse1_byte4
+  sta $4007
   rts
 .endproc
 
@@ -259,4 +282,5 @@ MAIN:
 
 NMI:
   jsr HandleVBlankNMI
+  jsr MakeSomeNoise
   rti
