@@ -168,25 +168,7 @@ NEXT:
   rts
 .endproc
 
-.proc RateLimit
-  lda #$EE
-  sta player_move_rate_limit_counter_msb
-LOOP_MSB:
-  lda #$00
-  sta player_move_rate_limit_counter_lsb
-LOOP_LSB:
-  inc player_move_rate_limit_counter_lsb
-  lda player_move_rate_limit_counter_lsb
-  bne LOOP_LSB
-  inc player_move_rate_limit_counter_msb
-  lda player_move_rate_limit_counter_msb
-  bne LOOP_MSB
-  rts
-.endproc
-
 .proc ProcessInput
-  ; jsr RateLimit
-
   lda last_controller_state
   sta param_1
   lda #$00
