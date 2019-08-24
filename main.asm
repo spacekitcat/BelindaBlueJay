@@ -49,6 +49,10 @@ music_len:
 .define controller_left_bitfield    #%00000010
 .define controller_right_bitfield   #%00000001
 
+; Setting this to 3F *should* make the interval 60 seconds
+; VBLANK is raised after each frame is rendered, 60 frames
+; are rendered per second by the PPU
+.define MOVEMENT_TIMER_MAX          #$00
 
 .zeropage
 last_controller_state:              .res 1
@@ -64,6 +68,9 @@ param_2:                            .res 1
 param_3:                            .res 1
 music_tracker_bit:                  .res 1
 
+movement_timer_one:                 .res 1
+should_move:                        .res 1
+
 .segment "STARTUP"
 
 .proc InitGame
@@ -73,8 +80,9 @@ music_tracker_bit:                  .res 1
   sta param_1
   sta param_2
   sta param_3
-  lda music_len
+  sta music_len
   sta music_tracker_bit
+  sta movement_timer_one
 
   jsr PlayerInit
   jsr NPCInit
@@ -177,7 +185,7 @@ LOOP_LSB:
 .endproc
 
 .proc ProcessInput
-  jsr RateLimit
+  ; jsr RateLimit
 
   lda last_controller_state
   sta param_1
@@ -249,9 +257,15 @@ END:
 
 .proc Main
   jsr PollInputWithVerification
+  lda should_move
+  cmp #$FF
+  bne EXIT
   jsr ProcessInput
   jsr NPCMove
   jsr AnimateSprites
+  lda #$00
+  sta should_move
+EXIT:
   rts
 .endproc
 
@@ -269,6 +283,20 @@ END:
   lda #$00
   sta register_ppu_scroll
   sta register_ppu_scroll
+
+  lda movement_timer_one
+  cmp MOVEMENT_TIMER_MAX
+  bcs RESET
+  jmp INCREMENT
+RESET:
+  lda #$00
+  sta movement_timer_one
+  lda #$FF
+  sta should_move
+  jmp EXIT
+INCREMENT:
+  inc movement_timer_one
+EXIT:
   rts
 .endproc
 
