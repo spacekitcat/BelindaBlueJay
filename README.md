@@ -9,7 +9,29 @@ A game written in 6502 assembly code for the Nintendo Entertainment System (NES)
 You need to get the `ca65` assembler and make sure the executable is resolvable by your shell from your search path.  
 
 ```bash
- belinda-the-bluejay-6502-nes <master> % ./build.sh
+ > % ./configure
+checking for a BSD-compatible install... /usr/local/bin/ginstall -c
+checking whether build environment is sane... yes
+checking for a thread-safe mkdir -p... /usr/local/bin/gmkdir -p
+checking for gawk... no
+checking for mawk... no
+checking for nawk... no
+checking for awk... awk
+checking whether make sets $(MAKE)... yes
+checking whether make supports nested variables... yes
+checking for ca65... true
+ > % ./build.sh
+```
+
+This `configure` script will fail if `ca65` isn't on you binary path.
+
+## Autoconf
+
+GNU Autotools are used to generate the `configure` script. Modifications should be made to `configure.ac` and regenerated as shown.
+
+```bash
+> $ aclocal
+> $ autoconf
 ```
 
 ## Running
