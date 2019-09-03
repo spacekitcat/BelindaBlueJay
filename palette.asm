@@ -1,10 +1,10 @@
 palette:
-.byte $3C,$11,$21,$31
-.byte $3C,$12,$22,$32
+.byte $3c,$3c,$21,$16
+.byte $28,$2C,$22,$21
 .byte $3C,$11,$21,$31
 .byte $3C,$11,$21,$31
 
-.byte $3C,$30,$29,$19
+.byte $24,$26,$15,$16
 .byte $3C,$30,$28,$27
 .byte $00,$00,$00,$00
 .byte $00,$00,$00,$00
@@ -16,7 +16,7 @@ palette:
   sta register_ppu_addr
   lda #$00
   stx register_ppu_addr
-  ldx #0
+  ldx #00
   :
     lda palette, X
     sta register_ppu_data

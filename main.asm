@@ -21,6 +21,7 @@
 .include "bird-sprite.asm"
 .include "player.asm"
 .include "npc.asm"
+.include "magpie.asm"
 
 music:
   .byte $a9, $00, $00, $00, $00, $00, $00, $00
@@ -71,6 +72,10 @@ music_tracker_bit:                  .res 1
 movement_timer_one:                 .res 1
 should_move:                        .res 1
 
+temp_var_1:                         .res 1
+temp_var_2:                         .res 1
+temp_var_3:                         .res 1
+
 .segment "STARTUP"
 
 .proc InitGame
@@ -84,8 +89,8 @@ should_move:                        .res 1
   sta music_tracker_bit
   sta movement_timer_one
 
-  jsr PlayerInit
-  jsr NPCInit
+  ; jsr PlayerInit
+  ; jsr NPCInit
 
   lda #%00000010
   sta $4015
@@ -112,27 +117,51 @@ NEXT:
 .endproc
 
 .proc InitSprites
-  lda #$B0
-  sta $0200 ; Y.
+;   lda #$B0
+;   sta $0200 ; Y.
+
+;   lda #$00
+;   sta $0201 ; Tile number.
+  
+;   lda #%00010000
+;   sta $0202 ; Attributes.
+;   lda #$80
+;   sta $0203 ; X.
+
+  ; lda #$B0
+  ; sta $0204 ; Y.
+
+  ; lda #$00
+  ; sta $0205 ; Tile number.
+  
+  ; lda #%00010001
+  ; sta $0206 ; Attributes.
+  ; lda #$80
+  ; sta $0207 ; X.
+
+  ; lda #$B0
+  ; sta $0208 ; Y.
+
+  ; lda #$09
+  ; sta $0209 ; Tile number.
+  
+  ; lda #%00010000
+  ; sta $020A ; Attributes.
+  ; lda #$80
+  ; sta $020B ; X.
 
   lda #$00
-  sta $0201 ; Tile number.
+  sta param_1
+  lda #$5B
+  sta param_2
+  lda #$5B
+  sta param_3
+  jsr DrawMagpie
   
-  lda #%00010000
-  sta $0202 ; Attributes.
-  lda #$80
-  sta $0203 ; X.
-
-  lda #$B0
-  sta $0204 ; Y.
-
   lda #$00
-  sta $0205 ; Tile number.
-  
-  lda #%00010001
-  sta $0206 ; Attributes.
-  lda #$80
-  sta $0207 ; X.
+  sta param_1
+  jsr SetLeftMagpie
+
   rts
 .endproc
 
@@ -169,14 +198,14 @@ NEXT:
 .endproc
 
 .proc ProcessInput
-  lda last_controller_state
-  sta param_1
-  lda #$00
-  sta param_2
-  lda #%00000000
-  sta param_3
-  jsr RenderBirdSprite
-  jsr RenderNPCDirectionSprite
+  ; lda last_controller_state
+  ; sta param_1
+  ; lda #$00
+  ; sta param_2
+  ; lda #%00000000
+  ; sta param_3
+  ; jsr RenderBirdSprite
+  ; jsr RenderNPCDirectionSprite
 
   beq END_PARSE_INPUT
 CHECK_RIGHT:
@@ -242,9 +271,9 @@ END:
   lda should_move
   cmp #$FF
   bne EXIT
-  jsr ProcessInput
-  jsr NPCMove
-  jsr AnimateSprites
+  ; jsr ProcessInput
+  ; jsr NPCMove
+  ; jsr AnimateSprites
   lda #$00
   sta should_move
 EXIT:
