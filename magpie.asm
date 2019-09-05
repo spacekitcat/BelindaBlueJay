@@ -63,43 +63,24 @@ LOAD_SUB_SPRITES:
 ;          (16 bytes)
 .proc SetLeftMagpie
   ldx param_1
-  inx ; Pattern
-  inx ; X
+  inx       ; Skip OAM first pattern byte
+  inx       ; Skip OAM first x byte
+  ldy #$00  ; Loop counter
+SET_OAM_ATTR:
+
   lda #%00000000  ; OAM color palette 1
   sta OAM_TABLE_START, X 
-
+  iny
+  tya
+  
+  ; Iterate to next OAM attr byte
   inx
   inx
   inx
   inx
-  lda #%00000000  ; OAM color palette 1
-  sta OAM_TABLE_START, X 
-
-  inx
-  inx
-  inx
-  inx
-  lda #%00000000  ; OAM color palette 1
-  sta OAM_TABLE_START, X 
-
-  inx
-  inx
-  inx
-  inx
-  lda #%00000000  ; OAM color palette 1
-  sta OAM_TABLE_START, X 
-
-  ; OAM iteration step
-  ; lda #$08
-  ; sta temp_var_1
-  ; OAM iteration accumulator
-  ; lda #$00
-  ; sta temp_var_1
-
-  ; UPDATE_OAM_ATTR:
-  ; lda #$04
-  ; adc temp_var_1
-  ; sta OAM_TABLE_START, X
+  
+  cmp #$04
+  bcc SET_OAM_ATTR
 
   rts
 .endproc
