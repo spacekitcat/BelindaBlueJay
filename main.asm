@@ -18,9 +18,6 @@
 .include "boot.asm"
 .include "palette.asm"
 .include "background.asm"
-.include "bird-sprite.asm"
-.include "player.asm"
-.include "npc.asm"
 .include "magpie.asm"
 
 music:
@@ -59,10 +56,6 @@ music_len:
 last_controller_state:              .res 1
 player_move_rate_limit_counter_lsb: .res 1
 player_move_rate_limit_counter_msb: .res 1
-animation_bishop:                   .res 1
-animation_vertical:                 .res 1
-animation_horizontal:               .res 1
-animation_rate_count:               .res 1
 way_point_ptr:                      .res 1
 param_1:                            .res 1
 param_2:                            .res 1
@@ -80,17 +73,12 @@ temp_var_3:                         .res 1
 
 .proc InitGame
   lda #$00  
-  sta animation_bishop
-  sta animation_vertical
   sta param_1
   sta param_2
   sta param_3
   sta music_len
   sta music_tracker_bit
   sta movement_timer_one
-
-  ; jsr PlayerInit
-  ; jsr NPCInit
 
   lda #%00000010
   sta $4015
@@ -117,50 +105,16 @@ NEXT:
 .endproc
 
 .proc InitSprites
-;   lda #$B0
-;   sta $0200 ; Y.
-
-;   lda #$00
-;   sta $0201 ; Tile number.
-  
-;   lda #%00010000
-;   sta $0202 ; Attributes.
-;   lda #$80
-;   sta $0203 ; X.
-
-  ; lda #$B0
-  ; sta $0204 ; Y.
-
-  ; lda #$00
-  ; sta $0205 ; Tile number.
-  
-  ; lda #%00010001
-  ; sta $0206 ; Attributes.
-  ; lda #$80
-  ; sta $0207 ; X.
-
-  ; lda #$B0
-  ; sta $0208 ; Y.
-
-  ; lda #$09
-  ; sta $0209 ; Tile number.
-  
-  ; lda #%00010000
-  ; sta $020A ; Attributes.
-  ; lda #$80
-  ; sta $020B ; X.
-
   lda #$00
   sta param_1
   lda #$5B
   sta param_2
   lda #$5B
   sta param_3
-  jsr DrawMagpie
+  jsr DrawMagpieRight
   
   lda #$00
   sta param_1
-  jsr SetLeftMagpie
 
   rts
 .endproc
@@ -198,37 +152,20 @@ NEXT:
 .endproc
 
 .proc ProcessInput
-  ; lda last_controller_state
-  ; sta param_1
-  ; lda #$00
-  ; sta param_2
-  ; lda #%00000000
-  ; sta param_3
-  ; jsr RenderBirdSprite
-  ; jsr RenderNPCDirectionSprite
+  lda last_controller_state
+  sta param_1
+  jsr MagpieDirectionRenderDispatch
 
-  beq END_PARSE_INPUT
 CHECK_RIGHT:
   lda last_controller_state
   and controller_right_bitfield
   beq CHECK_LEFT
-  jsr PlayerMoveEast
+  ; Right handler goes here
 CHECK_LEFT:
   lda last_controller_state
   and controller_left_bitfield
-  beq CHECK_DOWN
-  jsr PlayerMoveWest
-CHECK_DOWN:
-  lda last_controller_state
-  and controller_down_bitfield
-  beq CHECK_UP
-  jsr PlayerMoveSouth
-CHECK_UP:
-  lda last_controller_state
-  and controller_up_bitfield
   beq END_PARSE_INPUT
-  jsr PlayerMoveNorth
-
+  ; Left handler goes here
 END_PARSE_INPUT:
   rts
 .endproc
@@ -243,37 +180,12 @@ END_PARSE_INPUT:
   rts
 .endproc
 
-.proc AnimateSprites
-  lda animation_bishop
-  cmp #$00
-  bne SPRITE_FIRST
-SPRITE_NEXT:
-  lda #$03
-  sta animation_bishop
-  lda #$04
-  sta animation_vertical
-  lda #$05
-  sta animation_horizontal
-  jmp END
-SPRITE_FIRST:
-  lda #$00
-  sta animation_bishop
-  lda #$01
-  sta animation_vertical
-  lda #$02
-  sta animation_horizontal
-END:
-  rts
-.endproc
-
 .proc Main
   jsr PollInputWithVerification
   lda should_move
   cmp #$FF
   bne EXIT
-  ; jsr ProcessInput
-  ; jsr NPCMove
-  ; jsr AnimateSprites
+  jsr ProcessInput
   lda #$00
   sta should_move
 EXIT:
