@@ -25,6 +25,16 @@ checking for ca65... true
 
 This `configure` script will fail if `ca65` isn't on you binary path.
 
+If you get an error relating to `install-sh` you may have to update the `./install-sh` symlink.
+```sh
+rm ./install-sh
+ln -s $PATH_TO_INSTALL_SH install-sh
+```
+
+My value for `PATH_TO_INSTALL_SH` is `/opt/homebrew/Cellar/automake/1.16.5/share/automake-1.16/install-sh`.
+
+TODO: Figure out how to make Autoconf deal with this out.
+
 ## Autoconf
 
 GNU Autotools are used to generate the `configure` script. Modifications should be made to `configure.ac` and regenerated as shown.
